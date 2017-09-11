@@ -94,6 +94,11 @@ After you've run all the steps you should be able to run the python script
 included in this repository. I also recommend the PyCharm IDE as an awesome
 environment to work with this.
 
+Set the _lucene directory in the build folder as a sources route
+to remove those red lines everywhere. However auto-completion of
+code still doesn't work even with this. It will probably have
+to stay this way unless I get a smart idea about how to solve it.
+
 
 # What To Do If You Get Stuck
 I have tried this installation guide on another clean-ish Windows machine.
@@ -108,3 +113,14 @@ grading the project.
 If your build fails and the errors have something to do with visual studio,
 try going to control panel -> add/remove programs and "repair" the install
 of the build tools. This fixed my problems all the time that I was working.
+
+# Testing It Out
+
+To start testing the application out simply run:
+```
+python .\Indexer.py .\
+python .\SearchFiles.py
+```
+
+And then query away. This is just an example of the functionality that is going to
+come further down the line.

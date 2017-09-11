@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-INDEX_DIR = "index"
-
 import sys, os, lucene, threading, time
 from datetime import datetime
 
@@ -22,6 +20,9 @@ resulting Lucene index will be placed in the current directory and called
 'index'.
 """
 
+INDEX_DIR = "index"
+
+
 class Ticker(object):
 
     def __init__(self):
@@ -33,21 +34,22 @@ class Ticker(object):
             sys.stdout.flush()
             time.sleep(1.0)
 
+
 class IndexFiles(object):
     """Usage: python IndexFiles <doc_directory>"""
 
-    def __init__(self, root, storeDir, analyzer):
+    def __init__(self, root, store_dir, analyzer):
 
-        if not os.path.exists(storeDir):
-            os.mkdir(storeDir)
+        if not os.path.exists(store_dir):
+            os.mkdir(store_dir)
 
-        store = SimpleFSDirectory(Paths.get(storeDir))
+        store = SimpleFSDirectory(Paths.get(store_dir))
         analyzer = LimitTokenCountAnalyzer(analyzer, 1048576)
         config = IndexWriterConfig(analyzer)
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
         writer = IndexWriter(store, config)
 
-        self.indexDocs(root, writer)
+        IndexFiles.index_docs(root, writer)
         ticker = Ticker()
         print('commit index'),
         threading.Thread(target=ticker.run).start()
@@ -56,7 +58,8 @@ class IndexFiles(object):
         ticker.tick = False
         print('done')
 
-    def indexDocs(self, root, writer):
+    @staticmethod
+    def index_docs(root, writer):
 
         t1 = FieldType()
         t1.setStored(True)
@@ -68,15 +71,15 @@ class IndexFiles(object):
         t2.setTokenized(True)
         t2.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
 
-        for root, dirnames, filenames in os.walk(root):
-            for filename in filenames:
+        for root, dir_names, file_names in os.walk(root):
+            for filename in file_names:
                 if not filename.endswith('.txt'):
                     continue
                 print("adding", filename)
                 try:
                     path = os.path.join(root, filename)
-                    file = open(path)
-                    contents = unicode(file.read(), 'iso-8859-1')
+                    file = open(path, encoding='iso-8859-1')
+                    contents = file.read()
                     file.close()
                     doc = Document()
                     doc.add(Field("name", filename, t1))
