@@ -103,6 +103,14 @@ to stay this way unless I get a smart idea about how to solve it.
 Run: ```pip install -r requirements.txt``` to install all pip
 dependencies.
 
+# Launch The Server
+
+To launch the server simple cd to the LuceneIndexer directory and run
+```python .\server.py```
+
+And then query away. This is just an example of the functionality that is going to
+come further down the line.
+
 
 # What To Do If You Get Stuck
 I have tried this installation guide on another clean-ish Windows machine.
@@ -117,14 +125,3 @@ grading the project.
 If your build fails and the errors have something to do with visual studio,
 try going to control panel -> add/remove programs and "repair" the install
 of the build tools. This fixed my problems all the time that I was working.
-
-# Testing It Out
-
-To start testing the application out simply run:
-```
-python .\Indexer.py .\
-python .\SearchFiles.py
-```
-
-And then query away. This is just an example of the functionality that is going to
-come further down the line.

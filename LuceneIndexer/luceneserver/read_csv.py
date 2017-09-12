@@ -15,7 +15,7 @@ class ReadCSV:
 
         authors = {}
 
-        with open('../dataset/authors.csv', 'r') as csv_file:
+        with open('dataset/authors.csv', 'r') as csv_file:
             author_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
             skip_head = True
 
@@ -25,6 +25,5 @@ class ReadCSV:
                     continue
 
                 authors[row[0]] = row[1]
-                print(', '.join(row))
 
         return authors

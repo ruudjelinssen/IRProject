@@ -1,112 +1,91 @@
 #!/usr/bin/env python
 
-import sys, os, lucene, threading, time
+import sys, os, threading
 from datetime import datetime
+
+from .read_csv import ReadCSV
+from .ticker import Ticker
+
+# Import all lucene related dependencies needed
+
+import lucene
 
 from java.nio.file import Paths
 from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
 from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.document import \
-    Document, TextField, Field, FieldType
-from org.apache.lucene.index import \
-    FieldInfo, IndexWriter, IndexWriterConfig, IndexOptions, DirectoryReader, IndexReader
-from org.apache.lucene.store import \
-    Directory, SimpleFSDirectory
-
-from read_csv import ReadCSV
-
-"""
-This class is loosely based on the Lucene (java implementation) demo class
-org.apache.lucene.demo.IndexFiles.  It will take a directory as an argument
-and will index all of the files in that directory and downward recursively.
-It will index on the file path, the file name and the file contents.  The
-resulting Lucene index will be placed in the current directory and called
-'index'.
-"""
-
-INDEX_DIR = "../index"
-
-
-class Ticker(object):
-
-    def __init__(self):
-        self.tick = True
-
-    def run(self):
-        while self.tick:
-            sys.stdout.write('.')
-            sys.stdout.flush()
-            time.sleep(1.0)
+from org.apache.lucene.document import Document, TextField, Field, FieldType
+from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig, IndexOptions, DirectoryReader, IndexReader
+from org.apache.lucene.store import Directory, SimpleFSDirectory
 
 
 class Indexer(object):
-    """Usage: python Indexer"""
+	"""Indexer class that handles creating an index from the specified input"""
 
-    store = None
-    analyzer = None
-    writer = None
+	store = None
+	analyzer = None
+	writer = None
 
-    def __init__(self, store_dir, analyzer):
+	INDEX_DIR = "index"
 
-        # If the directory to store the index doesn't exists yet, create it now
+	def __init__(self):
+		"""Perform some initial set up"""
 
-        if not os.path.exists(store_dir):
-            os.mkdir(store_dir)
+		base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+		store_dir = os.path.join(base_dir, self.INDEX_DIR)
 
-        self.store = SimpleFSDirectory(Paths.get(store_dir)) # Create an index store
-        self.analyzer = LimitTokenCountAnalyzer(analyzer, 1048576) # Create an analyser
+		# If the directory to store the index doesn't exists yet, create it now
 
-        # Create an index writer using both of the above
+		if not os.path.exists(store_dir):
+			os.mkdir(store_dir)
 
-        config = IndexWriterConfig(analyzer)
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
-        self.writer = IndexWriter(self.store, config)
+		self.store = SimpleFSDirectory(Paths.get(store_dir))  # Create an index store
+		self.analyzer = LimitTokenCountAnalyzer(StandardAnalyzer(), 1048576)  # Create an analyser
 
-    def write_author_to_index(self, author_info):
+		# Create an index writer using both of the above
 
-        t2 = FieldType()
-        t2.setStored(False)
-        t2.setTokenized(True)
-        t2.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
+		config = IndexWriterConfig(self.analyzer)
+		config.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
+		self.writer = IndexWriter(self.store, config)
 
-        document = Document()
-        document.add(TextField("content", author_info, Field.Store.YES))
+	def write_author_to_index(self, author_info):
+		"""Write one author to the index"""
 
-        self.writer.addDocument(document)
+		t2 = FieldType()
+		t2.setStored(False)
+		t2.setTokenized(True)
+		t2.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
 
-    def index_docs(self):
+		document = Document()
+		document.add(TextField("content", author_info, Field.Store.YES))
 
-        ticker = Ticker()
-        print('commit index'),
-        threading.Thread(target=ticker.run).start()
+		self.writer.addDocument(document)
 
-        authors = ReadCSV.get_authors()
+	def index_docs(self):
+		"""Main function to start indexing the documents"""
 
-        for author_id in authors:
-            self.write_author_to_index(authors[author_id])
+		print('Starting Indexing Process')
 
-        self.writer.commit()
-        self.writer.close()
-        ticker.tick = False
-        print('done')
+		start = datetime.now()
+		ticker = Ticker()
+		threading.Thread(target=ticker.run).start()
 
-# Launch the indexer here
+		# Get all the authors and write them to the index write
 
-if __name__ == '__main__':
+		authors = ReadCSV.get_authors()
 
-    lucene.initVM(vmargs=['-Djava.awt.headless=true'])
-    print('lucene', lucene.VERSION)
-    start = datetime.now()
+		for author_id in authors:
+			self.write_author_to_index(authors[author_id])
 
-    try:
+		# Commit the result and close the writer
 
-        base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        indexer = Indexer(os.path.join(base_dir, INDEX_DIR), StandardAnalyzer())
-        indexer.index_docs()
-        end = datetime.now()
-        print(end - start)
+		self.writer.commit()
+		num_docs = self.writer.numDocs()
+		self.writer.close()
 
-    except Exception as e:
+		# Tear down of the function to close everything
 
-        print("Failed: ", e)
-        raise e
+		ticker.tick = False
+		print()
+		print('{} Files Indexed.'.format(num_docs))
+		end = datetime.now()
+		print('Indexing operation took: {}'.format(end - start))
