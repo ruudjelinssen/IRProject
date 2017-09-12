@@ -99,6 +99,10 @@ to remove those red lines everywhere. However auto-completion of
 code still doesn't work even with this. It will probably have
 to stay this way unless I get a smart idea about how to solve it.
 
+# Installing the LuceneIndexer Package
+Run: ```pip install -r requirements.txt``` to install all pip
+dependencies.
+
 
 # What To Do If You Get Stuck
 I have tried this installation guide on another clean-ish Windows machine.

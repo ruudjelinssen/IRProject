@@ -9,7 +9,7 @@ from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
 from org.apache.lucene.search import IndexSearcher
 
-INDEX_DIR = "index"
+INDEX_DIR = "../index"
 
 """
 This script is loosely based on the Lucene (java implementation) demo class
@@ -31,16 +31,17 @@ def run(searcher, analyzer):
 
         print()
         print("Searching for:", command)
-        query = QueryParser("contents", analyzer).parse(command)
+        query = QueryParser("content", analyzer).parse(command)
         scoreDocs = searcher.search(query, 50).scoreDocs
         print("%s total matching documents." % len(scoreDocs))
 
         for scoreDoc in scoreDocs:
             doc = searcher.doc(scoreDoc.doc)
-            print('path:', doc.get("path"), 'name:', doc.get("name"))
+            print('name:', doc.get('content'))
 
 
 if __name__ == '__main__':
+
     lucene.initVM(vmargs=['-Djava.awt.headless=true'])
     print('lucene', lucene.VERSION)
     base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))

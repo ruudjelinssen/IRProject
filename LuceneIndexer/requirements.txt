@@ -1,0 +1,9 @@
+#
+####### requirements.txt #######
+#
+###### Requirements without Version Specifiers ######
+flask
+flask-jsonpify
+flask-sqlalchemy
+flask-restful
+#
