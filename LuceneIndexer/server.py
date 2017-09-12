@@ -23,12 +23,28 @@ class Authors(Resource):
 		if query is None:
 			query = '*:*'
 
-		results = Search().get_results(query)
-		return {'authors': results}  # Fetches first column that is Employee ID
+		results = Search(query).get_results('authors')
+		return {'authors': results}
+
+
+class Papers(Resource):
+	"""The author API to be able to retrieve authors"""
+
+	def get(self):
+		query = request.args.get('query')
+
+		# Query for all results if no query argument in the request URL is present
+
+		if query is None:
+			query = '*:*'
+
+		results = Search(query).get_results('papers')
+		return {'papers': results}
 
 # Add our api resource routes
 
 api.add_resource(Authors, '/authors')  # Route_1
+api.add_resource(Papers, '/papers')  # Route_2
 
 # Run the application if running as a script
 

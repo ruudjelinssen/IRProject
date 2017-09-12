@@ -3,8 +3,8 @@
 import sys, os, threading
 from datetime import datetime
 
-from .read_csv import ReadCSV
 from .ticker import Ticker
+from .database import DataBase
 
 # Import all lucene related dependencies needed
 
@@ -13,7 +13,7 @@ import lucene
 from java.nio.file import Paths
 from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
 from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.document import Document, TextField, Field, FieldType
+from org.apache.lucene.document import Document, TextField, Field, FieldType, IntPoint
 from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig, IndexOptions, DirectoryReader, IndexReader
 from org.apache.lucene.store import Directory, SimpleFSDirectory
 
@@ -50,15 +50,36 @@ class Indexer(object):
 	def write_author_to_index(self, author_info):
 		"""Write one author to the index"""
 
-		t2 = FieldType()
-		t2.setStored(False)
-		t2.setTokenized(True)
-		t2.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
-
 		document = Document()
 		document.add(TextField("content", author_info, Field.Store.YES))
 
 		self.writer.addDocument(document)
+
+	def write_paper_to_index(self, paper):
+		"""Write a single paper with author information to the index"""
+
+		document = Document()
+		document.add(IntPoint("year", paper['year']))
+		document.add(TextField("title", paper['title'], Field.Store.YES))
+		document.add(TextField("event_type", paper['event_type'], Field.Store.YES))
+		document.add(TextField("pdf_name", paper['pdf_name'], Field.Store.YES))
+		document.add(TextField("abstract", paper['abstract'], Field.Store.YES))
+		document.add(TextField("paper_text", paper['paper_text'], Field.Store.YES))
+
+		for author in paper['authors']:
+			document.add(TextField('author', paper['authors'][author], Field.Store.YES))
+
+		self.writer.addDocument(document)
+
+	def index_all(self):
+		"""Index the entire NIPS papers collection"""
+
+		db = DataBase('dataset/database.sqlite')
+		docs = db.get_all()
+
+		for doc in docs:
+			self.write_paper_to_index(docs[doc])
+
 
 	def index_docs(self):
 		"""Main function to start indexing the documents"""
@@ -69,12 +90,9 @@ class Indexer(object):
 		ticker = Ticker()
 		threading.Thread(target=ticker.run).start()
 
-		# Get all the authors and write them to the index write
+		# Get all the information and write it to the index
 
-		authors = ReadCSV.get_authors()
-
-		for author_id in authors:
-			self.write_author_to_index(authors[author_id])
+		self.index_all()
 
 		# Commit the result and close the writer
 
