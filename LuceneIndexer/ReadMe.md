@@ -21,12 +21,10 @@ everything via Anaconda 3.6 with 64bit everything (apart from Ant).
 This has been confirmed working by me and hopefully should work for
 everybody else as well
 
-- Python 3.6 via Anaconda 64 bit (or Python 2.7 as the not recommended alternative).
-This should also work with non anaconda installations.
+- Python 3.6 via Anaconda 64 bit. This should also work with non anaconda installations.
 - 64 bit version of JDK 1.8.
 - [Microsoft Visual C++ Build Tools](https://www.microsoft.com/en-us/download/details.aspx?id=48159)
-for python 3.6, otherwise you can download the
-[Compiler for 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266).
+for python 3.6.
 - The latest (but still old) build of [WinAnt](https://code.google.com/archive/p/winant/downloads).
 Don't worry that it's not 64 bit. It's not trouble at all in this case.
 - 64 bit [Cywgin](https://www.cygwin.com/) - a windows environment to run make.
@@ -39,21 +37,15 @@ Any install guide for Windows wouldn't be complete without our long
 trusted friends - the Environment Variables!
 
 ```
-JAVA_HOME = C:\Program Files (x86)\Java\jdk1.8.0_144
-JCC_JDK = C:\Program Files (x86)\Java\jdk1.8.0_144
+JAVA_HOME = C:\Program Files\Java\jdk1.8.0_144
+JCC_JDK = C:\Program Files\Java\jdk1.8.0_144
 PATH += ;%JAVA_HOME%\bin
 PATH += ;%JAVA_HOME%\jre\bin\server
 PATH += ;C:\cygwin\bin
 ANT_HOME = C:\Program Files (x86)\WinAnt
-CLASSPATH = .;C:\Program Files (x86)\Java\jdk1.8.0_144\lib
-CLASSPATH += ;C:\Program Files (x86)\Java\jdk1.8.0_144\jre\lib
-CLASSPATH += ;C:\Program Files (x86)\Java\jdk1.8.0_144\lib\tools.jar
-```
-
-In addition if using 32bit Java:
-
-```
-PATH += ;%JAVA_HOME%\jre\bin\client;
+CLASSPATH = .;C:\Program Files\Java\jdk1.8.0_144\lib
+CLASSPATH += ;C:\Program Files\Java\jdk1.8.0_144\jre\lib
+CLASSPATH += ;C:\Program Files\Java\jdk1.8.0_144\lib\tools.jar
 ```
 
 # Installing Apache Lucene
@@ -64,6 +56,11 @@ Extract it into the directory where this readme is. I am purposely
 ignoring this folder and not letting you upload it to GitHub
 due to its size and that it should always be compiled from source
 on everyone's machines separately.
+
+Your directory structure should now roughly look as follows (probably with
+the exception of the index and dataset folders:
+
+![alt text](../images/lucene-folder-structure.png)
 
 First edit the variables in the makefile inside pylucene-x.x.x to
 correspond to what you need for your system e.g.
@@ -81,6 +78,7 @@ The commands to install if everything goes well from the directory of this
 readme are:
 
 ```
+cd .\pylucene-6.5.0
 pushd jcc
 python .\setup.py build
 python .\setup.py install
@@ -102,6 +100,13 @@ to stay this way unless I get a smart idea about how to solve it.
 # Installing the LuceneIndexer Package
 Run: ```pip install -r requirements.txt``` to install all pip
 dependencies.
+
+# Download the Necessary Data Set Files
+
+Download the NIPS papers in .sqlite format from
+[kaggle](https://www.kaggle.com/benhamner/nips-papers).
+
+Then extract the .sqlite file to ```IRPoject\LuceneIndexer\dataset```
 
 # Launch The Server
 
