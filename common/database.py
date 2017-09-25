@@ -29,7 +29,8 @@ class DataBase:
             ORDER BY p.id ASC
             """)
         selection = c.fetchall()
-        return self.rows_to_papers(selection)
+        return DataBase.rows_to_papers(selection)
+
 
     def get_all_authors(self):
         c = self.conn.cursor()
@@ -41,7 +42,8 @@ class DataBase:
         selection = c.fetchall()
         return self.rows_to_authors(selection)
 
-    def rows_to_papers(self, rows):
+    @staticmethod
+    def rows_to_papers(rows):
 
         dictionary = {}
 
@@ -53,7 +55,7 @@ class DataBase:
                 paper = Paper(row[0:7], row[7:9])
                 dictionary[paper_id] = paper
             else:
-                dictionary[paper_id].add = row[8]
+                dictionary[paper_id].add_author([row[7],row[8]])
 
         return dictionary
 
