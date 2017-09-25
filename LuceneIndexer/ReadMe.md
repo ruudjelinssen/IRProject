@@ -9,67 +9,68 @@ Before we go on you should know that this is a notoriously difficult
 product to build and you should therefore not be alarmed about
 the milliards of requirements that are going to be listed.
 
-This is confirmed working under the given requirements. I have tried
-to offer flexibility where possible but you may have to debug a bit
-if you do decide to deviate from this setup.
+**There is NO allowed deviation from the listed requirements.**
 
-# Installing the Prerequisites
+If you deviate from any of the installation steps listed below your are
+in essence, shooting yourself in the foot. You can choose to do this
+and debug yourself but no help will be given to you seeing as how
+with the current requirements, the build and execution process is
+confirmed working.
 
-You need to have the following installed on your computer. Recommended
-download links are given where appropriate. I would recommend to do
-everything via Anaconda 3.6 with 64bit everything (apart from Ant).
-This has been confirmed working by me and hopefully should work for
-everybody else as well
+# Install The Prerequisites
 
-- Python 3.6 via Anaconda 64 bit (or Python 2.7 as the not recommended alternative).
-This should also work with non anaconda installations.
-- 64 bit version of JDK 1.8.
+You need to have the following installed on your computer. Required
+download links are given for each download.
+
+- Python 3.6 via [Anaconda](https://www.anaconda.com/download/) 64 bit.
+- 64 bit version of [JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) 1.8.
 - [Microsoft Visual C++ Build Tools](https://www.microsoft.com/en-us/download/details.aspx?id=48159)
-for python 3.6, otherwise you can download the
-[Compiler for 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266).
-- The latest (but still old) build of [WinAnt](https://code.google.com/archive/p/winant/downloads).
-Don't worry that it's not 64 bit. It's not trouble at all in this case.
-- 64 bit [Cywgin](https://www.cygwin.com/) - a windows environment to run make.
-During installation please search for the package "make" and choose to
-install it. You have to make sure to explicitly do this.
+for python 3.6.
+- The latest (but still old) 32 bit build of [WinAnt](https://code.google.com/archive/p/winant/downloads).
+- 64 bit [Cywgin](https://www.cygwin.com/).
+During installation search for the package "make" and choose to
+install it explicitly.
 
 # Setting the Environment Variables
 
-Any install guide for Windows wouldn't be complete without our long
-trusted friends - the Environment Variables!
+Set the following environment variables on our system. The paths given
+should mostly be the same as yours, if you used the default locations
+during installation. The java version number may be different so
+update it to reflect the Java version that you have.
 
 ```
-JAVA_HOME = C:\Program Files (x86)\Java\jdk1.8.0_144
-JCC_JDK = C:\Program Files (x86)\Java\jdk1.8.0_144
+JAVA_HOME = C:\Program Files\Java\jdk1.8.0_144
+JCC_JDK = C:\Program Files\Java\jdk1.8.0_144
 PATH += ;%JAVA_HOME%\bin
 PATH += ;%JAVA_HOME%\jre\bin\server
 PATH += ;C:\cygwin\bin
 ANT_HOME = C:\Program Files (x86)\WinAnt
-CLASSPATH = .;C:\Program Files (x86)\Java\jdk1.8.0_144\lib
-CLASSPATH += ;C:\Program Files (x86)\Java\jdk1.8.0_144\jre\lib
-CLASSPATH += ;C:\Program Files (x86)\Java\jdk1.8.0_144\lib\tools.jar
-```
-
-In addition if using 32bit Java:
-
-```
-PATH += ;%JAVA_HOME%\jre\bin\client;
+CLASSPATH = .;C:\Program Files\Java\jdk1.8.0_144\lib
+CLASSPATH += ;C:\Program Files\Java\jdk1.8.0_144\jre\lib
+CLASSPATH += ;C:\Program Files\Java\jdk1.8.0_144\lib\tools.jar
 ```
 
 # Installing Apache Lucene
-We've come a long way already. That was tough, but we have to keep going.
 
-First download [Apache Lucene](http://www.apache.org/dyn/closer.lua/lucene/pylucene/).
-Extract it into the directory where this readme is. I am purposely
-ignoring this folder and not letting you upload it to GitHub
-due to its size and that it should always be compiled from source
-on everyone's machines separately.
+First download [PyLucene](http://www.apache.org/dyn/closer.lua/lucene/pylucene/)
+6.5.0.
+Extract it into the LuceneIndexer directory where this readme is.
+I am purposely
+ignoring this folder since it is too big to upload to GitHub and
+it should always be compiled from source on everyone's machines separately.
 
-First edit the variables in the makefile inside pylucene-x.x.x to
-correspond to what you need for your system e.g.
+Your directory structure should now roughly look as follows (probably with
+the exception of the index and dataset folders:
+
+![alt text](../images/lucene-folder-structure.png)
+
+Next, edit the variables in the makefile inside pylucene-x.x.x to
+correspond to what you need for your system. The following should mostly
+be the same with the exception of your user directory for the python
+path.
 
 ```
-PREFIX_PYTHON=C:\Users\Stanley\AppData\Local\Programs\Python\Python36-32
+PREFIX_PYTHON=C:/Users/Stanley/Anaconda3
 ANT=C:/Progra~2/WinAnt/bin/ant
 JAVA_HOME=C:/Progra~1/Java/jdk1.8.0_144
 PYTHON=$(PREFIX_PYTHON)/python.exe
@@ -77,10 +78,14 @@ JCC=$(PYTHON) -m jcc
 NUM_FILES=8
 ```
 
-The commands to install if everything goes well from the directory of this
-readme are:
+Now go to the LuceneIndexer directory using **Powershell**.
+
+**You MUST use powershell to complete the installation.**
+
+Run the following commands:
 
 ```
+cd .\pylucene-6.5.0
 pushd jcc
 python .\setup.py build
 python .\setup.py install
@@ -89,28 +94,40 @@ make
 make install
 ```
 
-The make step should take a very long time.
-After you've run all the steps you should be able to run the python script
-included in this repository. I also recommend the PyCharm IDE as an awesome
-environment to work with this.
-
-Set the _lucene directory in the build folder as a sources route
-to remove those red lines everywhere. However auto-completion of
-code still doesn't work even with this. It will probably have
-to stay this way unless I get a smart idea about how to solve it.
+The make step should take a very long time to complete but should
+finish eventually. Do not stop it if it seems like it is hanging, because
+it's not.
 
 # Installing the LuceneIndexer Package
 Run: ```pip install -r requirements.txt``` to install all pip
 dependencies.
+
+# Download the Necessary Data Set Files
+
+Download the NIPS papers in .sqlite format from
+[kaggle](https://www.kaggle.com/benhamner/nips-papers).
+
+Then extract the .sqlite file to ```IRPoject\LuceneIndexer\dataset```
 
 # Launch The Server
 
 To launch the server simple cd to the LuceneIndexer directory and run
 ```python .\server.py```
 
-And then query away. This is just an example of the functionality that is going to
-come further down the line.
+You can then query simple things by going to the url:
 
+```127.0.0.1:5002/papers?query=data```
+
+This will return all paper titles which have data in their title.
+
+# PyCharm Settings
+
+The following are a collection of useful hints and tips to know when
+using the preferred IDE in this case, PyCharm.
+
+- Set the _lucene directory in the build folder of PyLucene
+as a sources route to remove those red lines everywhere. Auto-completion
+of code still doesn't work even with this, but it's much nicer than before.
 
 # What To Do If You Get Stuck
 I have tried this installation guide on another clean-ish Windows machine.
