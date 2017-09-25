@@ -13,7 +13,7 @@ import lucene
 from java.nio.file import Paths
 from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
 from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.document import Document, TextField, Field, FieldType, IntPoint
+from org.apache.lucene.document import Document, TextField, Field, FieldType, IntPoint, StoredField
 from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig, IndexOptions, DirectoryReader, IndexReader
 from org.apache.lucene.store import Directory, SimpleFSDirectory
 
@@ -59,15 +59,16 @@ class Indexer(object):
 		"""Write a single paper with author information to the index"""
 
 		document = Document()
-		document.add(IntPoint("year", paper['year']))
-		document.add(TextField("title", paper['title'], Field.Store.YES))
-		document.add(TextField("event_type", paper['event_type'], Field.Store.YES))
-		document.add(TextField("pdf_name", paper['pdf_name'], Field.Store.YES))
-		document.add(TextField("abstract", paper['abstract'], Field.Store.YES))
-		document.add(TextField("paper_text", paper['paper_text'], Field.Store.YES))
+		document.add(IntPoint("year", paper.year))
+		document.add(StoredField("year", paper.year))
+		document.add(TextField("title", paper.title, Field.Store.YES))
+		document.add(TextField("event_type", paper.event_type, Field.Store.YES))
+		document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
+		document.add(TextField("abstract", paper.abstract, Field.Store.YES))
+		document.add(TextField("paper_text", paper.paper_text, Field.Store.YES))
 
-		for author in paper['authors']:
-			document.add(TextField('author', paper['authors'][author], Field.Store.YES))
+		for author in paper.authors:
+			document.add(TextField('author', paper.authors[author], Field.Store.YES))
 
 		self.writer.addDocument(document)
 

@@ -83,6 +83,13 @@ class Search:
 
 		for score_doc in score_docs:
 			doc = self.searcher.doc(score_doc.doc)
-			retrieved_files.append(doc.get('title'))
+			retrieved_files.append({
+				'title': doc.get('title'),
+				'year': doc.get('year'),
+				'authors': doc.get('author'),
+				'event_type': doc.get('event_type'),
+				'pdf_name': doc.get('pdf_name'),
+				'abstract': doc.get('abstract'),
+			})
 
 		return retrieved_files
