@@ -102,4 +102,5 @@ ENV/
 
 .idea
 
-LuceneIndexer/dataset/database.sqlite
+*.sqlite
+
