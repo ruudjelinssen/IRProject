@@ -3,8 +3,8 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 
-from luceneserver.indexer import Indexer
-from luceneserver.search import Search
+from LuceneIndexer.luceneserver.indexer import Indexer
+from LuceneIndexer.luceneserver.search import Search
 
 import lucene
 
