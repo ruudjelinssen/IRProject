@@ -2,6 +2,8 @@
 
 import sqlite3
 from sqlite3 import Error
+
+from common.author import Author
 from .paper import Paper
 
 
@@ -29,6 +31,16 @@ class DataBase:
         selection = c.fetchall()
         return self.rows_to_papers(selection)
 
+    def get_all_authors(self):
+        c = self.conn.cursor()
+        c.execute(
+            """
+            SELECT id, name FROM authors ORDER BY id ASC
+            """
+        )
+        selection = c.fetchall()
+        return self.rows_to_authors(selection)
+
     def rows_to_papers(self, rows):
 
         dictionary = {}
@@ -42,5 +54,17 @@ class DataBase:
                 dictionary[paper_id] = paper
             else:
                 dictionary[paper_id].add = row[8]
+
+        return dictionary
+
+    def rows_to_authors(self, rows):
+
+        dictionary = {}
+
+        for row in rows:
+            _id = row[0]
+            name = row[1]
+            if _id not in dictionary:
+                dictionary[_id] = Author(_id, name)
 
         return dictionary

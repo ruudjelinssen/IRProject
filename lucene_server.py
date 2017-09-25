@@ -13,33 +13,34 @@ api = Api(app)
 
 
 class Authors(Resource):
-	"""The author API to be able to retrieve authors"""
-	def get(self):
+    """The author API to be able to retrieve authors"""
 
-		query = request.args.get('query')
+    def get(self):
+        query = request.args.get('query')
 
-		# Query for all results if no query argument in the request URL is present
+        # Query for all results if no query argument in the request URL is present
 
-		if query is None:
-			query = '*:*'
+        if query is None:
+            query = '*:*'
 
-		results = Search(query).get_results('authors')
-		return {'authors': results}
+        results = Search(query).get_results('authors')
+        return {'authors': results}
 
 
 class Papers(Resource):
-	"""The author API to be able to retrieve authors"""
+    """The author API to be able to retrieve authors"""
 
-	def get(self):
-		query = request.args.get('query')
+    def get(self):
+        query = request.args.get('query')
 
-		# Query for all results if no query argument in the request URL is present
+        # Query for all results if no query argument in the request URL is present
 
-		if query is None:
-			query = '*:*'
+        if query is None:
+            query = '*:*'
 
-		results = Search(query).get_results('papers')
-		return {'papers': results}
+        results = Search(query).get_results('papers')
+        return {'papers': results}
+
 
 # Add our api resource routes
 
@@ -49,17 +50,16 @@ api.add_resource(Papers, '/papers')  # Route_2
 # Run the application if running as a script
 
 if __name__ == '__main__':
+    # Always launch the Java VM in which we are going to run Lucene
 
-	# Always launch the Java VM in which we are going to run Lucene
+    lucene.initVM(vmargs=['-Djava.awt.headless=true'])
+    print('lucene', lucene.VERSION)
 
-	lucene.initVM(vmargs=['-Djava.awt.headless=true'])
-	print('lucene', lucene.VERSION)
+    # Index all documents on server startup
 
-	# Index all documents on server startup
+    indexer = Indexer().index_docs()
 
-	indexer = Indexer().index_docs()
+    # Start the server!
 
-	# Start the server!
-
-	app.run(port=5002)
-	print('Server Running on port 5002')
+    app.run(port=5002)
+    print('Server Running on port 5002')
