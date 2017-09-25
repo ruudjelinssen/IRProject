@@ -2,6 +2,7 @@
 
 import sqlite3
 from sqlite3 import Error
+from .paper import Paper
 
 
 class DataBase:
@@ -19,12 +20,16 @@ class DataBase:
 
         c = self.conn.cursor()
         c.execute(
-            "SELECT p.id, p.year, p.title, p.event_type, p.pdf_name, p.abstract, p.paper_text, a.id, a.name FROM authors AS a, papers AS p, paper_authors AS pa WHERE p.id = pa.paper_id AND pa.author_id = a.id ORDER BY p.id ASC"
-        )
+            """
+            SELECT p.id, p.year, p.title, p.event_type, p.pdf_name, p.abstract, p.paper_text, a.id, a.name
+            FROM authors AS a, papers AS p, paper_authors AS pa
+            WHERE p.id = pa.paper_id AND pa.author_id = a.id
+            ORDER BY p.id ASC
+            """)
         selection = c.fetchall()
-        return self.rows_to_dictionary(selection)
+        return self.rows_to_papers(selection)
 
-    def rows_to_dictionary(self, rows):
+    def rows_to_papers(self, rows):
 
         dictionary = {}
 
@@ -32,18 +37,10 @@ class DataBase:
 
             paper_id = row[0]
             if paper_id not in dictionary:
-                dictionary[paper_id] = {
-                    'year': int(row[1]),
-                    'title': row[2],
-                    'event_type': row[3],
-                    'pdf_name': row[4],
-                    'abstract': row[5],
-                    'paper_text': row[6],
-                    'authors': {
-                        row[7]: row[8]
-                    }
-                }
+
+                paper = Paper(row[0:7], row[7:9])
+                dictionary[paper_id] = paper
             else:
-                dictionary[paper_id]['authors'][row[7]] = row[8]
+                dictionary[paper_id].add = row[8]
 
         return dictionary

@@ -4,7 +4,7 @@ import sys, os, threading
 from datetime import datetime
 
 from .ticker import Ticker
-from .database import DataBase
+from common.database import DataBase
 
 # Import all lucene related dependencies needed
 
@@ -25,7 +25,7 @@ class Indexer(object):
 	analyzer = None
 	writer = None
 
-	INDEX_DIR = "index"
+	INDEX_DIR = "LuceneIndexer/index"
 
 	def __init__(self):
 		"""Perform some initial set up"""

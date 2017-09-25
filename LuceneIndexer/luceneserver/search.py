@@ -21,7 +21,7 @@ class Search:
 	analyzer = None
 	query_string = ''
 
-	INDEX_DIR = 'index'
+	INDEX_DIR = 'LuceneIndexer/index'
 
 	def __init__(self, query_string):
 		"""Initialise prerequisites to search"""
