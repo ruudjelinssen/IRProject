@@ -4,7 +4,7 @@ import sqlite3
 from sqlite3 import Error
 
 from common.author import Author
-from .paper import Paper
+from common.paper import Paper
 
 
 class DataBase:
