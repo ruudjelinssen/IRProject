@@ -3,8 +3,8 @@
 from flask import Flask
 from flask_restful import Api
 
-from luceneserver.routes import Authors, Papers
-from luceneserver.javavm import JavaVM
+from .luceneserver.routes import Authors, Papers
+from .luceneserver.javavm import JavaVM
 
 
 class LuceneServer:

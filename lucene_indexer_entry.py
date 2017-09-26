@@ -15,7 +15,7 @@ python lucene_indexer_entry.py serve_development
 python lucene_indexer_entry.py serve_indexed
 """
 
-import sys
+import os, sys
 
 from LuceneIndexer import server, indexer
 
@@ -27,6 +27,8 @@ Valid commands are:
     - python lucene_indexer_entry.py serve_indexed
 """
 
+dataset_location = 'dataset/database.sqlite'  # Edit this line to set the location of the database to be used throughout
+absolute_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), dataset_location)
 command = sys.argv[1]
 
 if not command:
@@ -38,7 +40,7 @@ else:
     if command == 'index':
 
         # Start a new VM and perform the indexing operation
-        indexer.IndexerWrapper().index_docs()
+        indexer.IndexerWrapper.index_docs(absolute_path)
 
     elif command == 'serve_live':
 
@@ -48,7 +50,7 @@ else:
     elif command == 'serve_indexed':
 
         # Index all the documents and then launch the server
-        indexer.IndexerWrapper().index_docs()
+        indexer.IndexerWrapper.index_docs(absolute_path)
         server.LuceneServer().init_flask_server(False)
 
     elif command == 'serve_development':

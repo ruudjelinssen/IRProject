@@ -26,10 +26,12 @@ class Indexer(object):
     analyzer = None
     writer = None
 
-    INDEX_DIR = "LuceneIndexer/index"
+    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../index')
 
-    def __init__(self):
+    def __init__(self, dataset_location):
         """Perform some initial set up"""
+
+        self.dataset_location = dataset_location
 
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         store_dir = os.path.join(base_dir, self.INDEX_DIR)
@@ -76,7 +78,7 @@ class Indexer(object):
     def index_all(self):
         """Index the entire NIPS papers collection"""
 
-        db = DataBase('dataset/database.sqlite')
+        db = DataBase(self.dataset_location)
         docs = db.get_all()
 
         for doc in docs:
