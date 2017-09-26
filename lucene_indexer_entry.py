@@ -1,97 +1,63 @@
 #!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
+
+"""
+The purpose of this entry point is to provide access to the indexing and search functionality of apache lucene
+
+You are able to choose whether to index the documents, launch a server, launch a server with debug
+functionality, or index and then launch a server.
+
+To run this file, the following syntax must be used:
+
+python lucene_indexer_entry.py index
+python lucene_indexer_entry.py serve_live
+python lucene_indexer_entry.py serve_development
+python lucene_indexer_entry.py serve_indexed
+"""
 
 import sys
 
-import lucene
-from flask import Flask
-from flask_restful import Api
+from LuceneIndexer import server, indexer
 
-from LuceneIndexer.luceneserver.indexer import Indexer
-from LuceneIndexer.luceneserver.routes import *
+valid_commands = """
+Valid commands are:
+    - python lucene_indexer_entry.py index
+    - python lucene_indexer_entry.py serve_live
+    - python lucene_indexer_entry.py serve_development
+    - python lucene_indexer_entry.py serve_indexed
+"""
 
-app = Flask(__name__)
-api = Api(app)
+command = sys.argv[1]
 
+if not command:
 
-@app.before_first_request
-def init_vm():
-    """
-    Launch the Java VM before every first request when the server is (re)started
-    """
+    print('You must specify a command to run.')
+    print(valid_commands)
 
-    try:
-        lucene.initVM(vmargs=['-Djava.awt.headless=true'])
-        print('Launched apache lucene virtual Java instance running at', lucene.VERSION)
-    except ValueError:
-        print('Java VM already running - will not launch again')
+else:
+    if command == 'index':
 
+        # Start a new VM and perform the indexing operation
+        indexer.IndexerWrapper().index_docs()
 
-def init_flask_server(debug_mode_enabled):
-    """
-    Start a flask server instance
-    :param debug_mode_enabled: whether the server should support live reload and verbose logging
-    :return:
-    """
+    elif command == 'serve_live':
 
-    app.run(port=5002, debug=debug_mode_enabled)
-    print('Server Running on port 5002')
+        # Start a new server with debug mode turned off
+        server.LuceneServer().init_flask_server(False)
 
+    elif command == 'serve_indexed':
 
-# Add our api resource routes
+        # Index all the documents and then launch the server
+        indexer.IndexerWrapper().index_docs()
+        server.LuceneServer().init_flask_server(False)
 
-api.add_resource(Authors, '/authors')  # Route_1
-api.add_resource(Papers, '/papers')  # Route_2
+    elif command == 'serve_development':
 
-# Run the application if running as a script
-
-if __name__ == '__main__':
-
-    valid_commands = """
-    Valid commands are:
-        - python lucene_indexer_entry.py index
-        - python lucene_indexer_entry.py serve_live
-        - python lucene_indexer_entry.py serve_development
-        - python lucene_indexer_entry.py serve_indexed
-    """
-
-    command = sys.argv[1]
-
-    if not command:
-
-        print('You must specify a command to run.')
-        print(valid_commands)
+        # Start a new server with debug mode turned on (allows live reload of changed files)
+        server.LuceneServer().init_flask_server(True)
 
     else:
-        if command == 'index':
 
-            # Start a new VM and perform the indexing operation
-
-            init_vm()
-            indexer = Indexer().index_docs()
-
-        elif command == 'serve_live':
-
-            # Start a new server with debug mode turned off
-
-            init_flask_server(False)
-
-        elif command == 'serve_indexed':
-
-            # Index all the documents and then launch the server
-
-            init_vm()
-            indexer = Indexer().index_docs()
-            init_flask_server(False)
-
-        elif command == 'serve_development':
-
-            # Start a new development server that supports reload when changes in a file are made
-
-            init_flask_server(True)
-
-        else:
-
-            # Output that no valid command has been found and give possible options
-
-            print('Command not supported.')
-            print(valid_commands)
+        # Output that no valid command has been found and give possible options
+        print('Command not supported.')
+        print(valid_commands)
