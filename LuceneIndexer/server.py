@@ -1,10 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
+
+"""
+This file contains the code to create a simple REST server and be able to access defined paths
+corresponding to the information that we want to retrieve
+"""
 
 from flask import Flask
 from flask_restful import Api
 
+from .helpers.javavm import JavaVM
 from .luceneserver.routes import Authors, Papers
-from .luceneserver.javavm import JavaVM
 
 
 class LuceneServer:
