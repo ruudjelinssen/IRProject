@@ -1,8 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
+
+"""
+This is the main file that allows the NIPS paper collection to be searched and information to be retrieved.
+
+Most importantly, this file - GETS RESULTS.
+"""
 
 import sys, os
-
-# Import all lucene dependencies
 
 # Please don't remove me! I'm important so that all the other imports in this script work as well
 import lucene
@@ -16,37 +21,44 @@ from org.apache.lucene.search import IndexSearcher, MatchAllDocsQuery
 
 
 class Search:
-    """Allows retrieval of search results from the given index"""
 
     searcher = None
     analyzer = None
     query_string = ''
 
-    INDEX_DIR = 'LuceneIndexer/index'
+    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../index')
 
     def __init__(self, query_string):
-        """Initialise prerequisites to search"""
+        """
+        Initialise prerequisites to search
+        :param query_string:
+        """
 
-        base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        directory = SimpleFSDirectory(Paths.get(os.path.join(base_dir, self.INDEX_DIR)))
-        self.searcher = IndexSearcher(DirectoryReader.open(directory))
-        self.analyzer = StandardAnalyzer()
         self.query_string = query_string
 
-    def get_results(self, result_type):
-        """Get results from the index based on the given query string"""
+        # Create a new searcher  based on the already existing index
 
-        retrieved_files = None
+        base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        store_dir = SimpleFSDirectory(Paths.get(os.path.join(base_dir, self.INDEX_DIR)))
+        self.searcher = IndexSearcher(DirectoryReader.open(store_dir))
+
+        # Create the new analyser (the same one that was used for indexing
+
+        self.analyzer = StandardAnalyzer()
+
+    def get_results(self, result_type):
+        """
+        Get results from the index based on the given query string
+        :param result_type:
+        :return:
+        """
 
         print("Searching for:", self.query_string)
 
         if result_type == 'authors':
-            retrieved_files = self.get_authors()
-
-        if result_type == 'papers':
-            retrieved_files = self.get_papers()
-
-        return retrieved_files
+            return self.get_authors()
+        elif result_type == 'papers':
+            return self.get_papers()
 
     def get_authors(self):
 

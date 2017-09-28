@@ -41,7 +41,7 @@ class IndexerWrapper:
 
         Indexer().index_docs(docs)
 
-        ticker.tick = False
+        ticker_inst.tick = False
         end = datetime.now()
         print()
         print('Indexing operation took: {}'.format(end - start))

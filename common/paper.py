@@ -11,15 +11,6 @@ from .author import Author
 
 class Paper:
 
-    id = None
-    year = None
-    title = ""
-    event_type = ""
-    pdf_name = ""
-    abstract = ""
-    paper_text = ""
-    authors = []
-
     def __init__(self, paper_info, author_info):
         """
         Build a paper using the paper's info.
@@ -42,6 +33,7 @@ class Paper:
 
         self.paper_text = paper_info[6]
 
+        self.authors = []
         self.add_author([author_info[0], author_info[1]])
 
     def add_author(self, author_info):

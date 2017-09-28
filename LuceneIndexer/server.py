@@ -9,8 +9,8 @@ corresponding to the information that we want to retrieve
 from flask import Flask
 from flask_restful import Api
 
+from routes import Authors, Papers
 from .helpers.javavm import JavaVM
-from .luceneserver.routes import Authors, Papers
 
 
 class LuceneServer:

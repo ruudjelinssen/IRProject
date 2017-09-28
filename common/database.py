@@ -3,8 +3,7 @@
 import sqlite3
 from sqlite3 import Error
 
-from common.author import Author
-from common.paper import Paper
+from common import author, paper
 
 
 class DataBase:
@@ -31,7 +30,6 @@ class DataBase:
         selection = c.fetchall()
         return DataBase.rows_to_papers(selection)
 
-
     def get_all_authors(self):
         c = self.conn.cursor()
         c.execute(
@@ -52,8 +50,8 @@ class DataBase:
             paper_id = row[0]
             if paper_id not in dictionary:
 
-                paper = Paper(row[0:7], row[7:9])
-                dictionary[paper_id] = paper
+                paper_inst = paper.Paper(row[0:7], row[7:9])
+                dictionary[paper_id] = paper_inst
             else:
                 dictionary[paper_id].add_author([row[7],row[8]])
 
@@ -67,6 +65,6 @@ class DataBase:
             _id = row[0]
             name = row[1]
             if _id not in dictionary:
-                dictionary[_id] = Author(_id, name)
+                dictionary[_id] = author.Author(_id, name)
 
         return dictionary

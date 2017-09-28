@@ -3,7 +3,7 @@
 from flask import request
 from flask_restful import Resource
 
-from .search import Search
+from luceneserver.search import Search
 
 
 class Authors(Resource):
