@@ -77,14 +77,21 @@ else:
 if os.path.exists(lda_filename):
     lda_model = models.LdaModel.load(lda_filename)
 else:
-    lda_model = models.LdaModel(corpus, id2word=dictionary, num_topics=5)
+    lda_model = models.LdaModel(corpus, id2word=dictionary, num_topics=20)
     lda_model.save(lda_filename)
 
 # Print the topics
 i = 0
-for topic in lda_model.show_topics(num_topics=5, formatted=False):
+for topic in lda_model.show_topics(num_topics=20, formatted=False):
     i = i + 1
     print("Topic #" + str(i) + ":")
     for word in topic[1]:
         print('{} ({})'.format(word[0], word[1]))
     print("")
+
+# Search topic by query
+query = "Image recognition"
+bow = dictionary.doc2bow(query.lower().split())
+print('')
+print('Topic probabilities for query \'{}\':'.format(query))
+print(lda_model[bow])
