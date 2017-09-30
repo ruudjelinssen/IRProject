@@ -43,6 +43,10 @@ class Paper:
         :param author_info:
         :return:
         """
+
+        if not author_info[0] or not author_info[1] or author_info[1] == 'None':
+            return
+
         author = Author(author_info[0], author_info[1])
         self.authors.append(author)
 

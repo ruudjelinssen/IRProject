@@ -14,10 +14,10 @@ import lucene
 
 from java.nio.file import Paths
 from org.apache.lucene.analysis.core import WhitespaceAnalyzer
-from org.apache.lucene.index import DirectoryReader
+from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher, MatchAllDocsQuery
+from org.apache.lucene.search import IndexSearcher, MatchAllDocsQuery, BooleanQuery, TermQuery, Sort, Weight
 
 
 class Search:
@@ -67,16 +67,48 @@ class Search:
         query_string = self.query_string
 
         if query_string != '*:*':
-            query_string = 'author:' + query_string
+            query_string = 'author:(' + query_string + '~2' + ' ' + query_string + '^100' + ')'
 
-        query = QueryParser('authors', self.analyzer).parse(query_string + '~1')
+        print(query_string)
+
+        query = QueryParser('author', self.analyzer).parse(query_string)
 
         score_docs = self.searcher.search(query, 50).scoreDocs
         print("%s total matching documents." % len(score_docs))
 
         for score_doc in score_docs:
             doc = self.searcher.doc(score_doc.doc)
-            retrieved_files.append(doc.get('author'))
+
+            author_id = doc.get('author_id')
+
+            paper = {
+                'title': doc.get('paper_title'),
+                'year': doc.get('year'),
+                'event_type': doc.get('event_type'),
+                'pdf_name': doc.get('pdf_name'),
+                'abstract': doc.get('abstract'),
+            }
+
+            # Find out if this author already exists
+
+            array_pos = -1
+            count = -1
+
+            for x in retrieved_files:
+                count = count + 1
+                if x['id'] == int(author_id):
+                    array_pos = count
+                    break
+
+            if array_pos > -1:
+                retrieved_files[array_pos]['papers'].append(paper)
+            else:
+                retrieved_files.append({
+                    'id': int(author_id),
+                    'score': score_doc.score,
+                    'author': doc.get('author'),
+                    'papers': [paper]
+                })
 
         return retrieved_files
 
@@ -103,7 +135,7 @@ class Search:
                 authors.append(author.stringValue())
 
             retrieved_files.append({
-                'title': doc.get('title'),
+                'title': doc.get('paper_title'),
                 'year': doc.get('year'),
                 'authors': authors,
                 'event_type': doc.get('event_type'),
