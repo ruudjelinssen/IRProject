@@ -15,7 +15,7 @@ import sys
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.analysis.standard import StandardAnalyzer
+from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField
 from org.apache.lucene.index import IndexWriter, IndexWriterConfig
 from org.apache.lucene.store import SimpleFSDirectory
@@ -42,8 +42,10 @@ class Indexer(object):
         self.store = SimpleFSDirectory(Paths.get(store_dir))
 
         # Create an analyser
+        # We use the whitespace analyser since we want to preserve punctuation
+        # This is especially relevant when taking into account all the question marks present
 
-        self.analyzer = StandardAnalyzer()
+        self.analyzer = WhitespaceAnalyzer()
 
         # Create an index writer using both of the above
         # The open mode tells the writer that it should create, not append

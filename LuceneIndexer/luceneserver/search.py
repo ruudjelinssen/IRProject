@@ -13,7 +13,7 @@ import sys, os
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.analysis.standard import StandardAnalyzer
+from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.index import DirectoryReader
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
@@ -42,9 +42,9 @@ class Search:
         store_dir = SimpleFSDirectory(Paths.get(os.path.join(base_dir, self.INDEX_DIR)))
         self.searcher = IndexSearcher(DirectoryReader.open(store_dir))
 
-        # Create the new analyser (the same one that was used for indexing
+        # Create the new analyser (the same one that was used for indexing)
 
-        self.analyzer = StandardAnalyzer()
+        self.analyzer = WhitespaceAnalyzer()
 
     def get_results(self, result_type):
         """
@@ -69,7 +69,7 @@ class Search:
         if query_string != '*:*':
             query_string = 'author:' + query_string
 
-        query = QueryParser('authors', self.analyzer).parse(query_string)
+        query = QueryParser('authors', self.analyzer).parse(query_string + '~1')
 
         score_docs = self.searcher.search(query, 50).scoreDocs
         print("%s total matching documents." % len(score_docs))
