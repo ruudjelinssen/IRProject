@@ -32,18 +32,18 @@ import org.neo4j.shell.log.Logger;
  */
 public class WebInfo {
 
-    private static final String PATH = "D:\\marcbrouwer\\Documents\\TUe\\2IMM15 - Web information retrieval and data mining\\nips-papers\\";
+    //private static final String PATH = "D:\\marcbrouwer\\Documents\\TUe\\2IMM15 - Web information retrieval and data mining\\nips-papers\\";
     
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
         //createGraph(getAuthors(), getPapersSQLite(), getPaperAuthors());
-        getReferenceBlocks();
+        getReferenceBlocks("D:\\marcbrouwer\\Documents\\TUe\\2IMM15 - Web information retrieval and data mining\\nips-papers\\");
     }
     
-    private static Map<Integer, String> getAuthors() {
-        File csv = new File(PATH + "authors.csv");
+    private static Map<Integer, String> getAuthors(String path) {
+        File csv = new File(path + "authors.csv");
         Map<Integer, String> map = new HashMap<>();
         
         try {
@@ -83,8 +83,8 @@ public class WebInfo {
         return map;
     }
     
-    private static List<Map.Entry<Integer, Integer>> getPaperAuthors() {
-        File csv = new File(PATH + "paper_authors.csv");
+    private static List<Map.Entry<Integer, Integer>> getPaperAuthors(String path) {
+        File csv = new File(path + "paper_authors.csv");
         List<Map.Entry<Integer, Integer>> list = new ArrayList<>();
         
         try {
@@ -107,8 +107,8 @@ public class WebInfo {
         return list;
     }
     
-    private static Map<Integer, String[]> getPapers() {
-        File csv = new File(PATH + "papers.csv");
+    private static Map<Integer, String[]> getPapers(String path) {
+        File csv = new File(path + "papers.csv");
         Map<Integer, String[]> map = new HashMap<>();
         
         try {
@@ -210,8 +210,8 @@ public class WebInfo {
         }
     }
     
-    private static Map<Integer, String[]> getPapersSQLite() {
-        String url = "jdbc:sqlite:" + PATH + "database.sqlite";
+    private static Map<Integer, String[]> getPapersSQLite(String path) {
+        String url = "jdbc:sqlite:" + path + "database.sqlite";
         String query = "SELECT id,year,title,event_type,pdf_name FROM papers";
         
         Map<Integer, String[]> map = new HashMap<>();
@@ -263,8 +263,8 @@ public class WebInfo {
      * 
      * @return all reference blocks as map with paper_id => year,title,reference block
      */
-    public static Map<Integer, String[]> getReferenceBlocks() {
-        String url = "jdbc:sqlite:" + PATH + "database.sqlite";
+    public static Map<Integer, String[]> getReferenceBlocks(String path) {
+        String url = "jdbc:sqlite:" + path + "database.sqlite";
         String query = "SELECT id,year,title,paper_text FROM papers";
         
         Map<Integer, String[]> map = new HashMap<>();
@@ -354,8 +354,8 @@ public class WebInfo {
         return map;
     }
     
-    public static Map<Integer, String[]> getAuthorNamesSplit() {
-        Map<Integer, String> authors = getAuthors();
+    public static Map<Integer, String[]> getAuthorNamesSplit(String path) {
+        Map<Integer, String> authors = getAuthors(path);
         Map<Integer, String[]> names = new HashMap<>();
         
         authors.entrySet().forEach(entry 
