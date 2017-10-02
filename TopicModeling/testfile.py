@@ -12,10 +12,13 @@ dictionary_file = os.path.join(base_dir, 'documents.dict')
 corpus_file = os.path.join(base_dir, 'corpus.mm')
 lda_filename = os.path.join(base_dir, 'model.lda')
 
+lda_model = None
+
 # Load from file if available
 if os.path.exists(dictionary_file) and os.path.exists(corpus_file):
     dictionary = corpora.Dictionary.load(dictionary_file)
     corpus = corpora.MmCorpus(corpus_file)
+    lda_model = LDAModel.from_files(dictionary_file, corpus_file)
 else:
     # Read from database
     db = DataBase('../dataset/database.sqlite')
@@ -48,10 +51,12 @@ else:
     lda_model = LDAModel(dictionary=dictionary, corpus=corpus)
     lda_model.build_model(num_topics=20)
 
-
 # Save files
-lda_model.save_files(corpus_file, dictionary_file)
-lda_model.save_model_file(lda_filename)
+if not os.path.exists(lda_filename):
+    lda_model.save_model_file(lda_filename)
+if not os.path.exists(dictionary_file) and not os.path.exists(corpus_file):
+    lda_model.save_files(corpus_file, dictionary_file)
+
 
 # Print the topics
 i = 0
