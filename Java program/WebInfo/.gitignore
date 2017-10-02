@@ -1,6 +1,7 @@
 #ant specific
 dist/
 build/
+!lib
 
 #netbeans specific
 nbproject/*
