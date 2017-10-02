@@ -30,14 +30,12 @@ class Preprocessor:
 class MultiPreprocessor(Preprocessor):
     def __init__(self, documents, preprocessors):
         super(MultiPreprocessor, self).__init__(documents)
-        self.preprocessors = []
-        for p in preprocessors:
-            self.preprocessors.append(p(documents))
+        self.preprocessors = preprocessors
 
     def run(self):
         print("Starting MultiPreprocessor")
         for p in self.preprocessors:
-            self.documents = p.run()
+            self.documents = p(self.documents).run()
         print("MultiPreprocessor finished")
         return self.documents
 
@@ -47,7 +45,6 @@ class SpecialCharactersPreprocessor(Preprocessor):
 
     def run(self):
         print("Starting SpecialCharactersPreprocessor")
-        print("--")
         special_ch = list(set(string.printable) - set(string.ascii_lowercase))
         docs = []
         i = 0
@@ -72,7 +69,7 @@ class StopWordsPreprocessor(Preprocessor):
     def run(self):
         print("Starting StopWordsPreprocessor")
         stop_words_list = stop_words.safe_get_stop_words('en')
-        docs = [[word for word in document.lower().split() if word not in stop_words_list]
+        docs = [[word for word in document if word not in stop_words_list]
                 for document in self.documents]
         print("StopWordsPreprocessor finished")
         return docs

@@ -32,7 +32,7 @@ else:
 
     # Preprocess the documents
     preprocessor = MultiPreprocessor(documents,
-                                     [SpecialCharactersPreprocessor, StopWordsPreprocessor, MinFrequencyPreprocessor])
+                                     [StopWordsPreprocessor, MinFrequencyPreprocessor, SpecialCharactersPreprocessor])
     documents = preprocessor.run()
 
     # Create a dictionary (word to id)
