@@ -210,7 +210,7 @@ public class WebInfo {
         }
     }
     
-    public static Map<Integer, String[]> getPapersSQLite() {
+    private static Map<Integer, String[]> getPapersSQLite() {
         String url = "jdbc:sqlite:" + PATH + "database.sqlite";
         String query = "SELECT id,year,title,event_type,pdf_name FROM papers";
         
@@ -339,10 +339,11 @@ public class WebInfo {
                 }
                 
                 String refBlock = replace[replace.length - 1];
-                replace = null;
                 parts[2] = refBlock;
-
-                map.put(result.getInt("id"), parts);
+                
+                if (replace.length > 1) {
+                    map.put(result.getInt("id"), parts);
+                }
             }
 
             conn.close();
@@ -357,9 +358,20 @@ public class WebInfo {
         Map<Integer, String> authors = getAuthors();
         Map<Integer, String[]> names = new HashMap<>();
         
-        authors.entrySet().forEach(entry -> names.put(entry.getKey(), entry.getValue().split(" ")));
+        authors.entrySet().forEach(entry 
+                -> names.put(entry.getKey(), entry.getValue().split(" ")));
         
         return names;
+    }
+    
+    public static Map<Integer, String> extractPaperTitles(
+            Map<Integer, String[]> referenceBlocks) {
+        Map<Integer, String> titles = new HashMap<>();
+        
+        referenceBlocks.entrySet().forEach(entry -> 
+                titles.put(entry.getKey(), entry.getValue()[1]));
+        
+        return titles;
     }
     
 }
