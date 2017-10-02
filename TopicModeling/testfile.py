@@ -44,6 +44,10 @@ else:
     # Create corpus (doc to id to frequency)
     corpus = [dictionary.doc2bow(text) for text in documents]
 
+# Run tfidf
+tfidf_preprocessor = TfIdfPreprocessor(corpus)
+corpus = tfidf_preprocessor.run()
+
 # Load model from file
 if os.path.exists(lda_filename):
     lda_model = LDAModel.from_model_file(lda_filename)

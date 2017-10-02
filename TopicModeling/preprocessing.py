@@ -4,6 +4,7 @@ import abc
 import string
 
 import stop_words
+from gensim.models import TfidfModel
 
 
 class Preprocessor:
@@ -92,3 +93,19 @@ class MinFrequencyPreprocessor(Preprocessor):
                 for text in self.documents]
         print("MinFrequencyPreprocessor finished")
         return docs
+
+
+class TfIdfPreprocessor:
+    def __init__(self, corpus):
+        self.corpus = corpus
+
+    def run(self):
+        print("Running TF.IDF preprocessor")
+        tfidf = TfidfModel(self.corpus)
+
+        print(tfidf)
+
+        # TODO: remove words from corpus
+
+        print("Finished running TF.IDF preprocessor")
+        return self.corpus
