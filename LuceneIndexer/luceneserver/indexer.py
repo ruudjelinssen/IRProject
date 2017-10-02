@@ -15,9 +15,9 @@ import sys
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.analysis.standard import StandardAnalyzer
+from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig, Term
 from org.apache.lucene.store import SimpleFSDirectory
 
 
@@ -42,8 +42,10 @@ class Indexer(object):
         self.store = SimpleFSDirectory(Paths.get(store_dir))
 
         # Create an analyser
+        # We use the whitespace analyser since we want to preserve punctuation
+        # This is especially relevant when taking into account all the question marks present
 
-        self.analyzer = StandardAnalyzer()
+        self.analyzer = WhitespaceAnalyzer()
 
         # Create an index writer using both of the above
         # The open mode tells the writer that it should create, not append
@@ -87,22 +89,25 @@ class Indexer(object):
         :return:
         """
 
-        document = Document()
-        document.add(TextField("title", paper.title, Field.Store.YES))
-        document.add(TextField("event_type", paper.event_type, Field.Store.YES))
-        document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
-        document.add(TextField("abstract", paper.abstract, Field.Store.YES))
-        document.add(TextField("paper_text", paper.paper_text, Field.Store.YES))
-
-        # We add the year as both an int point for easy searching
-        # and as a stored field for display purposes
-
-        document.add(IntPoint("year", paper.year))
-        document.add(StoredField("year", paper.year))
-
-        # Every author that we add to the same field simply concatenates that when searching
-
         for author in paper.authors:
-            document.add(TextField('author', author.name, Field.Store.YES))
 
-        self.writer.addDocument(document)
+            document = Document()
+            document.add(IntPoint('paper_id', paper.id))
+            document.add(TextField("paper_title", paper.title, Field.Store.YES))
+            document.add(TextField("event_type", paper.event_type, Field.Store.YES))
+            document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
+            document.add(TextField("abstract", paper.abstract, Field.Store.YES))
+            document.add(TextField("paper_text", paper.paper_text, Field.Store.YES))
+
+            # We add the year as both an int point for easy searching
+            # and as a stored field for display purposes
+
+            document.add(IntPoint("year", paper.year))
+            document.add(StoredField("year", paper.year))
+
+            # Every author that we add to the same field simply concatenates that when searching
+
+            document.add(TextField('author', author.name, Field.Store.YES))
+            document.add(StoredField('author_id', author.id))
+
+            self.writer.addDocument(document)
