@@ -28,6 +28,8 @@ else:
     for id, paper in papers.items():
         documents.append(paper.paper_text)
 
+    documents = [[word for word in text.lower().split()] for text in documents]
+
     # Preprocess the documents
     preprocessor = MultiPreprocessor(documents,
                                      [SpecialCharactersPreprocessor, StopWordsPreprocessor, MinFrequencyPreprocessor])

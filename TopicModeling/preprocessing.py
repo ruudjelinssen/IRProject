@@ -14,6 +14,7 @@ class Preprocessor:
 
     def __init__(self, documents):
         self.documents = documents
+        self.count = len(documents)
 
     @abc.abstractmethod
     def run(self):
@@ -34,8 +35,10 @@ class MultiPreprocessor(Preprocessor):
             self.preprocessors.append(p(documents))
 
     def run(self):
+        print("Starting MultiPreprocessor")
         for p in self.preprocessors:
             self.documents = p.run()
+        print("MultiPreprocessor finished")
         return self.documents
 
 
@@ -43,8 +46,11 @@ class SpecialCharactersPreprocessor(Preprocessor):
     """Remove special characters"""
 
     def run(self):
+        print("Starting SpecialCharactersPreprocessor")
+        print("--")
         special_ch = list(set(string.printable) - set(string.ascii_lowercase))
         docs = []
+        i = 0
         for document in self.documents:
             words = []
             for word in document:
@@ -55,6 +61,8 @@ class SpecialCharactersPreprocessor(Preprocessor):
                 if len(w) > 1:
                     words.append(w)
             docs.append(words)
+            i += 1
+        print("SpecialCharactersPreprocessor finished")
         return docs
 
 
@@ -62,9 +70,11 @@ class StopWordsPreprocessor(Preprocessor):
     """Remove words that are in the list of stopwords"""
 
     def run(self):
+        print("Starting StopWordsPreprocessor")
         stop_words_list = stop_words.safe_get_stop_words('en')
         docs = [[word for word in document.lower().split() if word not in stop_words_list]
                 for document in self.documents]
+        print("StopWordsPreprocessor finished")
         return docs
 
 
@@ -72,6 +82,7 @@ class MinFrequencyPreprocessor(Preprocessor):
     """Remove words that appear only x times"""
 
     def run(self):
+        print("Starting MinFrequencyPreprocessor")
         # remove words that appear only once
         from collections import defaultdict
         frequency = defaultdict(int)
@@ -82,4 +93,5 @@ class MinFrequencyPreprocessor(Preprocessor):
         # Save tokens that occur more than once
         docs = [[token for token in text if frequency[token] > 1]
                 for text in self.documents]
+        print("MinFrequencyPreprocessor finished")
         return docs
