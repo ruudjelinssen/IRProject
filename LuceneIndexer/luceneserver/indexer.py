@@ -11,11 +11,12 @@ The standard analyzer, as part of its job, removes predefined common stop words 
 import os
 import sys
 
+from helpers import constants
+
 # Please don't delete me! I'm important!
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField
 from org.apache.lucene.index import IndexWriter, IndexWriterConfig, Term
 from org.apache.lucene.store import SimpleFSDirectory
@@ -29,7 +30,6 @@ class Indexer(object):
     writer = None
 
     dataset_location = None
-    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../paper_index')
 
     def __init__(self):
         """
@@ -45,7 +45,7 @@ class Indexer(object):
         # We use the whitespace analyser since we want to preserve punctuation
         # This is especially relevant when taking into account all the question marks present
 
-        self.analyzer = WhitespaceAnalyzer()
+        self.analyzer = constants.ANALYZER()
 
         # Create an index writer using both of the above
         # The open mode tells the writer that it should create, not append
@@ -75,7 +75,7 @@ class Indexer(object):
         """
 
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        store_dir = os.path.join(base_dir, self.INDEX_DIR)
+        store_dir = os.path.join(base_dir, constants.INDEX_DIR)
 
         if not os.path.exists(store_dir):
             os.mkdir(store_dir)

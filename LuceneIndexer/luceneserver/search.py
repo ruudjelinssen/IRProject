@@ -8,12 +8,12 @@ Most importantly, this file - GETS RESULTS.
 """
 
 import sys, os
+from helpers import constants
 
 # Please don't remove me! I'm important so that all the other imports in this script work as well
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
@@ -26,8 +26,6 @@ class Search:
     analyzer = None
     query_string = ''
 
-    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../paper_index')
-
     def __init__(self, query_string):
         """
         Initialise prerequisites to search
@@ -39,12 +37,12 @@ class Search:
         # Create a new searcher  based on the already existing index
 
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        store_dir = SimpleFSDirectory(Paths.get(os.path.join(base_dir, self.INDEX_DIR)))
+        store_dir = SimpleFSDirectory(Paths.get(os.path.join(base_dir, constants.INDEX_DIR)))
         self.searcher = IndexSearcher(DirectoryReader.open(store_dir))
 
         # Create the new analyser (the same one that was used for indexing)
 
-        self.analyzer = WhitespaceAnalyzer()
+        self.analyzer = constants.ANALYZER()
 
     def get_results(self, result_type):
         """
@@ -55,10 +53,11 @@ class Search:
 
         print("Searching for:", self.query_string)
 
-        if result_type == 'authors':
-            return self.get_authors()
-        elif result_type == 'papers':
+        if result_type == 'papers':
             return self.get_papers()
+        else:
+            print('Result type is not supported.')
+            return []
 
     def get_authors(self):
 
