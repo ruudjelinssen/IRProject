@@ -9,7 +9,7 @@ corresponding to the information that we want to retrieve
 from flask import Flask
 from flask_restful import Api
 
-from routes import Authors, Papers
+from routes import Papers
 from .helpers.javavm import JavaVM
 
 
@@ -44,5 +44,4 @@ class LuceneServer:
         :return:
         """
 
-        self.api.add_resource(Authors, '/authors')
         self.api.add_resource(Papers, '/papers')

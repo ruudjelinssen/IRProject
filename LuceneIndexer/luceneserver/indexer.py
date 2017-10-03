@@ -29,7 +29,7 @@ class Indexer(object):
     writer = None
 
     dataset_location = None
-    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../index')
+    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../paper_index')
 
     def __init__(self):
         """
@@ -89,25 +89,25 @@ class Indexer(object):
         :return:
         """
 
+        document = Document()
+        document.add(StoredField('paper_id', str(paper.id)))
+        document.add(TextField("paper_title", paper.title, Field.Store.YES))
+        document.add(TextField("event_type", paper.event_type, Field.Store.YES))
+        document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
+        document.add(TextField("abstract", paper.abstract, Field.Store.YES))
+        document.add(TextField("paper_text", paper.paper_text, Field.Store.YES))
+
+        # We add the year as both an int point for easy searching
+        # and as a stored field for display purposes
+
+        document.add(IntPoint("year", paper.year))
+        document.add(StoredField("year", paper.year))
+
         for author in paper.authors:
-
-            document = Document()
-            document.add(IntPoint('paper_id', paper.id))
-            document.add(TextField("paper_title", paper.title, Field.Store.YES))
-            document.add(TextField("event_type", paper.event_type, Field.Store.YES))
-            document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
-            document.add(TextField("abstract", paper.abstract, Field.Store.YES))
-            document.add(TextField("paper_text", paper.paper_text, Field.Store.YES))
-
-            # We add the year as both an int point for easy searching
-            # and as a stored field for display purposes
-
-            document.add(IntPoint("year", paper.year))
-            document.add(StoredField("year", paper.year))
 
             # Every author that we add to the same field simply concatenates that when searching
 
             document.add(TextField('author', author.name, Field.Store.YES))
-            document.add(StoredField('author_id', author.id))
+            document.add(StoredField('author_id', str(author.id)))
 
-            self.writer.addDocument(document)
+        self.writer.addDocument(document)

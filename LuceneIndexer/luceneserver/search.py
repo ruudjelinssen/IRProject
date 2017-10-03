@@ -26,7 +26,7 @@ class Search:
     analyzer = None
     query_string = ''
 
-    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../index')
+    INDEX_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../paper_index')
 
     def __init__(self, query_string):
         """
