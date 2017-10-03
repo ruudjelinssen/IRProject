@@ -10,12 +10,17 @@ that the user specified into various components. We do this in order to show the
 and the different search techniques and models that can be present.
 
 We pragmatically construct a query by using many of the inbuilt query classes that Apache Lucene has to offer.
+
+We offer an exact search syntax that the user has to use. This is an alternative way of formulating queries
+which still offers a rigid structure however with more of a natural feel. This is a step up from filling
+in certain boxes.
 """
 
 import lucene
 
-from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery
+from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery
 from org.apache.lucene.document import IntPoint
+from org.apache.lucene.index import Term
 
 
 class QueryBuilder(object):
@@ -42,6 +47,7 @@ class QueryBuilder(object):
 
         self.__check_blank()
         self.__check_year_range()
+        self.__check_author_match()
 
         return self.query.build()
 
@@ -74,3 +80,21 @@ class QueryBuilder(object):
 
             range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[1])
             self.query.add(range_query, BooleanClause.Occur.MUST)
+
+    def __check_author_match(self):
+        """
+        We check to see if an author name is present and do fuzzy matching on that author name
+
+        :return:
+        """
+
+        if 'written by' in self.query_string:
+
+            parts = self.query_string.split('written by')
+            self.query_string = parts[0].strip()
+            author_name = parts[1].strip()
+            author_name_parts = author_name.split(' ')
+
+            for part in author_name_parts:
+                fuzzy_query = FuzzyQuery(Term('author', part), 2)
+                self.query.add(fuzzy_query, BooleanClause.Occur.MUST)
