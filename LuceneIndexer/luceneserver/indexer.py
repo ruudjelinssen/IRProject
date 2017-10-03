@@ -89,6 +89,9 @@ class Indexer(object):
         :return:
         """
 
+        concat = paper.title + ' ' + paper.event_type + ' ' + paper.pdf_name + ' ' + ' ' + paper.abstract
+        concat = concat + ' ' + paper.paper_text + ' ' + str(paper.year)
+
         document = Document()
         document.add(StoredField('paper_id', str(paper.id)))
         document.add(TextField("paper_title", paper.title, Field.Store.YES))
@@ -109,5 +112,10 @@ class Indexer(object):
 
             document.add(TextField('author', author.name, Field.Store.YES))
             document.add(StoredField('author_id', str(author.id)))
+            concat = concat + ' ' + author.name
+
+        # Finally concatenate every field together and then add it as an unstored field 'content'
+
+        document.add(TextField("content", concat, Field.Store.NO))
 
         self.writer.addDocument(document)
