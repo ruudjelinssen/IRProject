@@ -18,7 +18,7 @@ in certain boxes.
 
 import lucene
 
-from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery
+from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery
 from org.apache.lucene.document import IntPoint
 from org.apache.lucene.index import Term
 
@@ -38,6 +38,11 @@ class QueryBuilder(object):
 
         self.query = BooleanQuery.Builder()
 
+        # These are the variables defining what fields remain to search
+
+        self.has_author = False
+        self.has_year = False
+
     def build_query(self):
         """
         Perform a step by step query building process
@@ -48,6 +53,7 @@ class QueryBuilder(object):
         self.__check_blank()
         self.__check_year_range()
         self.__check_author_match()
+        self.__check_rest_text()
 
         return self.query.build()
 
@@ -74,10 +80,12 @@ class QueryBuilder(object):
 
         if len(year_array) == 1:
 
+            self.has_year = True
             range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[0])
             self.query.add(range_query, BooleanClause.Occur.MUST)
         elif len(year_array) == 2:
 
+            self.has_year = True
             range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[1])
             self.query.add(range_query, BooleanClause.Occur.MUST)
 
@@ -90,6 +98,8 @@ class QueryBuilder(object):
 
         if 'written by' in self.query_string:
 
+            self.has_author = True
+
             parts = self.query_string.split('written by')
             self.query_string = parts[0].strip()
             author_name = parts[1].strip()
@@ -98,3 +108,17 @@ class QueryBuilder(object):
             for part in author_name_parts:
                 fuzzy_query = FuzzyQuery(Term('author', part), 2)
                 self.query.add(fuzzy_query, BooleanClause.Occur.MUST)
+
+    def __check_rest_text(self):
+        """
+        Check if we still have something left and search weighted in the rest of the text.
+
+        :return:
+        """
+
+        if self.query_string.strip() != '':
+
+            for word in self.query_string.split(' '):
+
+                term = Term('content', word)
+                self.query.add(TermQuery(term), BooleanClause.Occur.MUST)
