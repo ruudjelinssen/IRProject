@@ -23,27 +23,21 @@ from org.apache.lucene.search import IndexSearcher
 class Search:
 
     searcher = None
-    analyzer = None
-    query_string = ''
 
-    def __init__(self, query_string):
+    def __init__(self, query_params):
         """
         Initialise prerequisites to search
 
-        :param query_string:
+        :param query_params:
         """
 
-        self.query_string = query_string
+        self.query_params = query_params
 
         # Create a new searcher  based on the already existing index
 
         base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         store_dir = SimpleFSDirectory(Paths.get(os.path.join(base_dir, constants.INDEX_DIR)))
         self.searcher = IndexSearcher(DirectoryReader.open(store_dir))
-
-        # Create the new analyser (the same one that was used for indexing)
-
-        self.analyzer = constants.ANALYZER()
 
     def get_results(self, result_type):
         """
@@ -53,15 +47,15 @@ class Search:
         :return:
         """
 
-        print("Searching for:", self.query_string)
+        print("Searching...")
 
         if result_type == 'papers':
-            return self.get_papers()
+            return self.__get_papers()
         else:
             print('Result type is not supported.')
             return []
 
-    def get_papers(self):
+    def __get_papers(self):
         """
         Build a list of papers after performing a search on papers
         :return:
@@ -69,8 +63,8 @@ class Search:
 
         retrieved_files = []
 
-        qb = QueryBuilder(self.query_string)
-        query = qb.build_query()
+        qb = QueryBuilder()
+        query = qb.build_query(self.query_params)
 
         score_docs = self.searcher.search(query, 50).scoreDocs
         print("%s total matching documents." % len(score_docs))

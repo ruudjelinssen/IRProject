@@ -25,100 +25,194 @@ from org.apache.lucene.index import Term
 
 class QueryBuilder(object):
 
-    def __init__(self, query_string):
+    def __init__(self):
         """
-        Construct the class based on a user input query string
-
-        :param query_string:
+        Construct the class with some default settings
         """
-
-        self.query_string = query_string
-
-        # The Boolean query class is the one that encompasses all other queries
-
-        self.query = BooleanQuery.Builder()
 
         # These are the variables defining what fields remain to search
 
         self.has_author = False
         self.has_year = False
+        self.is_blank_query = True
 
-    def build_query(self):
+        # The Boolean query class is the one that encompasses all other queries
+
+        self.boolean_query_builder = BooleanQuery.Builder()
+
+    def build_query(self, query_params):
         """
-        Perform a step by step query building process
+        Set the search class properties based on the passed in parameters
+
+        :param query_params:
+        :return:
+        """
+
+        if 'author' in query_params:
+            self.__build_author_information(query_params['author'])
+            self.has_author = True
+            self.is_blank_query = False
+
+        if 'title' in query_params:
+            self.__build_title_information(query_params['title'])
+            self.is_blank_query = False
+
+        if 'abstract' in query_params:
+            self.__build_abstract_information(query_params['abstract'])
+            self.is_blank_query = False
+
+        if 'event_type' in query_params:
+            self.__build_event_type_information(query_params['event_type'])
+            self.is_blank_query = False
+
+        if 'paper_text' in query_params:
+            self.__build_paper_text_information(query_params['paper_text'])
+            self.is_blank_query = False
+
+        if 'year' in query_params:
+            self.__check_year_range(query_params['year'])
+            self.has_year = True
+            self.is_blank_query = False
+
+        if 'pdf_name' in query_params:
+            self.__build_pdf_name_information(query_params['pdf_name'])
+            self.is_blank_query = False
+
+        if 'query' in query_params:
+            self.__build_free_text_query(query_params['query'])
+
+        if not query_params:
+            self.__check_blank('')
+
+        return self.boolean_query_builder.build()
+
+    def __build_free_text_query(self, query_string):
+        """
+        Perform a step by step query building process based on the free text and other fields filled in
 
         :return:
         """
 
-        self.__check_blank()
-        self.__check_year_range()
-        self.__check_author_match()
-        self.__check_rest_text()
+        self.__check_blank(query_string)
+        self.__check_year_range(query_string)
+        self.__check_author_match(query_string)
+        self.__check_rest_text(query_string)
 
-        return self.query.build()
+    def __build_author_information(self, author_name):
 
-    def __check_blank(self):
+        author_name_parts = author_name.split(' ')
+
+        for part in author_name_parts:
+            fuzzy_query = FuzzyQuery(Term('author', part), 2)
+            self.boolean_query_builder.add(fuzzy_query, BooleanClause.Occur.MUST)
+
+    def __build_title_information(self, title):
+
+        title_parts = title.split(' ')
+
+        for part in title_parts:
+            term_query = TermQuery(Term('paper_title', part))
+            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+
+    def __build_abstract_information(self, query_string):
+
+        query_string_parts = query_string.split(' ')
+
+        for part in query_string_parts:
+            term_query = TermQuery(Term('abstract', part))
+            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+
+    def __build_event_type_information(self, query_string):
+
+        query_string_parts = query_string.split(' ')
+
+        for part in query_string_parts:
+            term_query = TermQuery(Term('event_type', part))
+            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+
+    def __build_paper_text_information(self, query_string):
+
+        query_string_parts = query_string.split(' ')
+
+        for part in query_string_parts:
+            term_query = TermQuery(Term('paper_text', part))
+            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+
+    def __build_year_information(self, query_string):
+
+        query_string_parts = query_string.split(' ')
+
+        for part in query_string_parts:
+            term_query = TermQuery(Term('year', part))
+            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+
+    def __build_pdf_name_information(self, query_string):
+
+        query_string_parts = query_string.split(' ')
+
+        for part in query_string_parts:
+            term_query = TermQuery(Term('pdf_name', part))
+            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+
+    def __check_blank(self, query_string):
         """
         If the query string is blank then do a search for everything
 
         :return:
         """
 
-        if self.query_string == '':
+        if query_string == '' and self.is_blank_query is True:
 
             all_docs_query = MatchAllDocsQuery()
-            self.query.add(all_docs_query, BooleanClause.Occur.MUST)
+            self.boolean_query_builder.add(all_docs_query, BooleanClause.Occur.MUST)
 
-    def __check_year_range(self):
+    def __check_year_range(self, query_string):
         """
         Perform basic analysis whether query string contains numbers that would then be years
 
         :return:
         """
 
-        year_array = [int(s) for s in self.query_string.split() if s.isdigit()]
+        year_array = [int(s) for s in query_string.split() if s.isdigit()]
 
         if len(year_array) == 1:
 
             self.has_year = True
             range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[0])
-            self.query.add(range_query, BooleanClause.Occur.MUST)
+            self.boolean_query_builder.add(range_query, BooleanClause.Occur.MUST)
         elif len(year_array) == 2:
 
             self.has_year = True
             range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[1])
-            self.query.add(range_query, BooleanClause.Occur.MUST)
+            self.boolean_query_builder.add(range_query, BooleanClause.Occur.MUST)
 
-    def __check_author_match(self):
+    def __check_author_match(self, query_string):
         """
         We check to see if an author name is present and do fuzzy matching on that author name
 
         :return:
         """
 
-        if 'written by' in self.query_string:
+        if 'written by' in query_string:
 
             self.has_author = True
 
             parts = self.query_string.split('written by')
             self.query_string = parts[0].strip()
             author_name = parts[1].strip()
-            author_name_parts = author_name.split(' ')
 
-            for part in author_name_parts:
-                fuzzy_query = FuzzyQuery(Term('author', part), 2)
-                self.query.add(fuzzy_query, BooleanClause.Occur.MUST)
+            self.__build_author_information(author_name)
 
-    def __check_rest_text(self):
+    def __check_rest_text(self, query_string):
         """
         Check if we still have something left and search weighted in the rest of the text.
 
         :return:
         """
 
-        if self.query_string.strip() != '':
+        if query_string.strip() != '':
 
-            for word in self.query_string.split(' '):
+            for word in query_string.split(' '):
 
                 term = Term('content', word)
-                self.query.add(TermQuery(term), BooleanClause.Occur.MUST)
+                self.boolean_query_builder.add(TermQuery(term), BooleanClause.Occur.MUST)

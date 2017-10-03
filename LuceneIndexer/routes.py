@@ -18,12 +18,7 @@ class Papers(Resource):
 
         # Get the user input as teh query parameter called query
 
-        query = request.args.get('query')
+        query_args = request.args
 
-        # If a query is not present then it is the empty string
-
-        if query is None:
-            query = ''
-
-        results = Search(query).get_results('papers')
+        results = Search(query_args).get_results('papers')
         return results
