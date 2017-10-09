@@ -39,7 +39,10 @@ public class WebInfo {
      */
     public static void main(String[] args) throws Exception {
         //createGraph(getAuthors(), getPapersSQLite(), getPaperAuthors());
-        getReferenceBlocks("D:\\marcbrouwer\\Documents\\TUe\\2IMM15 - Web information retrieval and data mining\\nips-papers\\");
+        Map<Integer, String[]> references = getReferenceBlocks("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
+        FilterReferences filter = new FilterReferences();
+        Map<Integer, String> authors = getAuthors("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
+        List<Map.Entry<Integer, Integer>> results = filter.filter(references, authors);
     }
     
     private static Map<Integer, String> getAuthors(String path) {
