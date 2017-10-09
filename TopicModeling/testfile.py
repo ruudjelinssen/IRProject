@@ -35,7 +35,7 @@ else:
 
     # Preprocess the documents
     preprocessor = MultiPreprocessor(documents,
-                                     [StopWordsPreprocessor, MinFrequencyPreprocessor, SpecialCharactersPreprocessor])
+                                     [StopWordsPreprocessor, MinFrequencyPreprocessor, SpecialCharactersPreprocessor, TopKWordsPreprocessor])
     documents = preprocessor.run()
 
     # Create a dictionary (word to id)
@@ -45,15 +45,15 @@ else:
     corpus = [dictionary.doc2bow(text) for text in documents]
 
 # Run tfidf
-tfidf_preprocessor = TfIdfPreprocessor(corpus)
-corpus = tfidf_preprocessor.run()
+# tfidf_preprocessor = TfIdfPreprocessor(corpus)
+# corpus = tfidf_preprocessor.run()
 
 # Load model from file
 if os.path.exists(lda_filename):
     lda_model = LDAModel.from_model_file(lda_filename)
 else:
     lda_model = LDAModel(dictionary=dictionary, corpus=corpus)
-    lda_model.build_model(num_topics=20)
+    lda_model.build_model(num_topics=5)
 
 # Save files
 if not os.path.exists(lda_filename):
@@ -64,7 +64,7 @@ if not os.path.exists(dictionary_file) and not os.path.exists(corpus_file):
 
 # Print the topics
 i = 0
-for topic in lda_model.model.show_topics(num_topics=20, formatted=False):
+for topic in lda_model.model.show_topics(num_topics=20, formatted=False, num_words=20):
     i = i + 1
     print("Topic #" + str(i) + ":")
     for word in topic[1]:
