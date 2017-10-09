@@ -25,7 +25,7 @@ class DataBase:
             SELECT p.id, p.year, p.title, p.event_type, p.pdf_name, p.abstract, p.paper_text, a.id, a.name
             FROM authors AS a, papers AS p, paper_authors AS pa
             WHERE p.id = pa.paper_id AND pa.author_id = a.id
-            ORDER BY p.id ASC LIMIT 2000
+            ORDER BY p.id ASC
             """)
         selection = c.fetchall()
         return DataBase.rows_to_papers(selection)
@@ -36,7 +36,7 @@ class DataBase:
             """
             SELECT id, year, title, event_type, pdf_name, abstract, paper_text
             FROM papers
-            ORDER BY id LIMIT 2000
+            ORDER BY id
             """
         )
         selection = c.fetchall()
