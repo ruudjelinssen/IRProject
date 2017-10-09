@@ -6,6 +6,7 @@ from common.database import DataBase
 import nltk
 
 import logging
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 nltk.download('all')
@@ -39,7 +40,7 @@ documents = [[lemmatizer.lemmatize(token) for token in doc] for doc in documents
 from gensim.models.phrases import Phrases
 
 # Add bigrams and trigrams to docs (only ones that appear 20 times or more).
-bigram = Phrases(documents, min_count=20)
+bigram = Phrases(documents, min_count=10)
 for idx in range(len(documents)):
     for token in bigram[documents[idx]]:
         if '_' in token:
@@ -53,18 +54,18 @@ from gensim.corpora import Dictionary
 dictionary = Dictionary(documents)
 
 # Filter out words that occur less than 20 documents, or more than 50% of the documents.
-dictionary.filter_extremes(no_below=20, no_above=0.5)
+dictionary.filter_extremes(no_below=50, no_above=0.4)
 
 corpus = [dictionary.doc2bow(doc) for doc in documents]
 
 print('Number of unique tokens: %d' % len(dictionary))
 print('Number of documents: %d' % len(corpus))
 
-from gensim.models import LdaModel
+from gensim.models import LdaModel, LdaMulticore
 
 # Set training parameters.
-num_topics = 10
-chunksize = 2000
+num_topics = 50
+chunksize = 10000
 passes = 20
 iterations = 400
 eval_every = None  # Don't evaluate model perplexity, takes too much time.
