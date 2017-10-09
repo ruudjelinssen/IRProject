@@ -30,6 +30,18 @@ class DataBase:
         selection = c.fetchall()
         return DataBase.rows_to_papers(selection)
 
+    def get_all_papers(self):
+        c = self.conn.cursor()
+        c.execute(
+            """
+            SELECT id, year, title, event_type, pdf_name, abstract, paper_text
+            FROM papers
+            ORDER BY id LIMIT 2000
+            """
+        )
+        selection = c.fetchall()
+        return DataBase.rows_to_papers(selection)
+
     def get_all_authors(self):
         c = self.conn.cursor()
         c.execute(
@@ -50,10 +62,14 @@ class DataBase:
             paper_id = row[0]
             if paper_id not in dictionary:
 
-                paper_inst = paper.Paper(row[0:7], row[7:9])
+                if len(row) > 7:
+                    paper_inst = paper.Paper(row[0:7], row[7:9])
+                else:
+                    paper_inst = paper.Paper(row[0:7], None)
                 dictionary[paper_id] = paper_inst
             else:
-                dictionary[paper_id].add_author([row[7],row[8]])
+                if len(row) > 7:
+                    dictionary[paper_id].add_author([row[7],row[8]])
 
         return dictionary
 
