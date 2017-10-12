@@ -1,5 +1,8 @@
 # Read from database
 import os
+import gensim
+from builtins import print
+
 from nltk.tokenize import RegexpTokenizer
 from gensim.corpora import Dictionary
 from common.database import DataBase
@@ -102,8 +105,41 @@ def makemodel():
 
     pprint(top_topics)
 
+def DTM():
+    db = DataBase('../dataset/database.sqlite')
+    papers = db.get_all_papers()
+
+    # documents = []
+    #
+    # for id, paper in papers.items():
+    #     documents.append(paper.year)
+
+    myTimelist = [1987];
+    for x in range(1, 30):
+        myTimelist.append(myTimelist[0]+x)
+    print(myTimelist)
+
+    timeslices = []
+    for year in myTimelist:
+        papersPerYear = 0
+        for id,paper in papers.items():
+            if paper.year == year:
+                papersPerYear = papersPerYear + 1
+        timeslices.append(papersPerYear)
+    print(sum(timeslices))
+
+    dictionary = corpora.Dictionary.load(dictionary_file)
+    corpus = corpora.MmCorpus(corpus_file)
+
+    model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus, timeslices, num_topics=20, id2word=dictionary)
+    top_topics = model.top_topics(corpus)
+    print(top_topics)
+
+
 if not os.path.exists(dictionary_file) and not os.path.exists(corpus_file):
-    preProcessing()
-    makemodel()
+    # //preProcessing()
+    # makemodel()
+    DTM()
 else:
-    makemodel()
+    DTM()
+    # makemodel()
