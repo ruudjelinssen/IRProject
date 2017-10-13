@@ -6,6 +6,9 @@ from gensim.models import LdaModel
 from TopicModeling import preprocessing
 from common.database import DataBase
 
+LDA_MODEL_FILE = 'lda.model'
+DTM_MODEL_FILE = 'dtm.model'
+
 
 def LDA(corpus, dictionary):
     logging.info('Building LDA model.')
@@ -22,6 +25,9 @@ def LDA(corpus, dictionary):
                      alpha='auto', eta='auto',
                      iterations=iterations, num_topics=num_topics,
                      passes=passes, eval_every=eval_every)
+
+    # Save the model to a file
+    model.save(LDA_MODEL_FILE)
 
     # Get the top models
     top_topics = model.top_topics(corpus, num_words=30)
