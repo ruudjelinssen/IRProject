@@ -10,6 +10,8 @@ from common.database import DataBase
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
 LDA_MODEL_FILE = os.path.join(base_dir, 'lda.model')
 DTM_MODEL_FILE = os.path.join(base_dir, 'dtm.model')
+ATM_MODEL_FILE = os.path.join(base_dir, 'atm.model')
+SERIALIZATION_FILE = os.path.join(base_dir, 'atm-ser.model')
 
 
 def LDA(corpus, dictionary):
@@ -72,10 +74,62 @@ def DTM(corpus, dictionary):
     logging.info(top_topics)
 
 
+def ATM(corpus, dictionary):
+    logging.info('Building ATM model.')
+
+    # The parameters for the lda model
+    num_topics = 30
+    chunk_size = 7000
+    passes = 20
+    iterations = 400
+    eval_every = None
+
+    # Get all papers
+    db = DataBase('../dataset/database.sqlite')
+    papers = db.get_all()
+    papers2 = db.get_all_papers()  # This is wrong, but keep it in (table join in get_all() leaves out some papers)
+
+    # Create doc to author dictionary
+    doc2author = {}
+    i = 0
+    for d0, p0 in papers2.items():
+        authors = []
+        for d1, p1 in papers.items():
+            if d0 == d1:
+                authors = [a.name for a in p1.authors]
+        doc2author[i] = authors
+        i += 1
+
+    # Check if corpus and doc2author are the same size
+    if len(corpus) != len(doc2author):
+        raise Exception(
+            'Doc2Author does not have the same size as the corpus. doc2author: {}, corpus: {}'.format(len(doc2author),
+                                                                                                      len(corpus)))
+
+    # Create the model
+    model = gensim.models.AuthorTopicModel(corpus, id2word=dictionary, num_topics=num_topics, doc2author=doc2author,
+                                           alpha='auto', eta='auto', iterations=iterations, passes=passes,
+                                           chunksize=chunk_size, eval_every=eval_every, serialized=True,
+                                           serialization_path=SERIALIZATION_FILE)
+
+    # Save the model to a file
+    model.save(ATM_MODEL_FILE)
+
+    # Get the top models
+    top_topics = model.top_topics(corpus, num_words=30)
+
+    # Calculate the average coherence
+    avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topics
+
+    logging.info('Average topic coherence: {}'.format(avg_topic_coherence))
+    logging.info('Top topics:')
+    logging.info(top_topics)
+
+
 if __name__ == '__main__':
     # Test your models here
     # Moves to the topics_entry.py when everything is finished
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     corpus, dictionary = preprocessing.get_from_file_or_build()
-    LDA(corpus, dictionary)
+    ATM(corpus, dictionary)
     DTM(corpus, dictionary)

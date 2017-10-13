@@ -36,7 +36,7 @@ class DataBase:
             """
             SELECT id, year, title, event_type, pdf_name, abstract, paper_text
             FROM papers
-            ORDER BY id LIMIT 1000
+            ORDER BY id
             """
         )
         selection = c.fetchall()
