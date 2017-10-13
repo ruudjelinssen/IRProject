@@ -1,13 +1,15 @@
 import logging
 
 import gensim
+import os
 from gensim.models import LdaModel
 
 from TopicModeling import preprocessing
 from common.database import DataBase
 
-LDA_MODEL_FILE = 'lda.model'
-DTM_MODEL_FILE = 'dtm.model'
+base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
+LDA_MODEL_FILE = os.path.join(base_dir, 'lda.model')
+DTM_MODEL_FILE = os.path.join(base_dir, 'dtm.model')
 
 
 def LDA(corpus, dictionary):
@@ -76,3 +78,4 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     corpus, dictionary = preprocessing.get_from_file_or_build()
     LDA(corpus, dictionary)
+    DTM(corpus, dictionary)
