@@ -1,6 +1,5 @@
 # Gensim
 gensim
-stop-words
 
 # Web server
 flask
