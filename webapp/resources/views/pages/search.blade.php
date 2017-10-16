@@ -25,8 +25,7 @@
 
         <div class="row">
         @foreach($results as $result)
-
-                <div class="col-xs-6 col-xs-offset-3">
+                <div class="col-xs-6 col-xs-offset-2">
                     <section class="ResultCard">
                         <h1 class="ResultTitle">{{$result->title}}</h1>
                         <div class="QuickFacts">
@@ -45,6 +44,7 @@
                                 <li class="QuickFact"> {{$author}}</li>
                             @endforeach
                         </ul>
+                        <div>{!! $result->highlight !!}</div>
                         <div>{{$result->abstract}}</div>
                     </section>
                 </div>
