@@ -11,6 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::any('/search', [
+    'as' => 'search',
+    'uses' => 'APIController@showSearch',
+]);
