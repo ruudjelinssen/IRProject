@@ -8411,3 +8411,17 @@ body {
           flex: 0 0 3rem;
 }
 
+.ResultCard .QuickFact {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+.ResultCard .QuickFact .lnr {
+  padding-right: 0.5rem;
+}
+
+.ResultCard .AuthorList {
+  display: inline-block;
+  padding-left: 0.1rem;
+}
+

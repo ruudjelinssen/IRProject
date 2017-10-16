@@ -29,16 +29,23 @@
                 <div class="col-xs-6 col-xs-offset-3">
                     <section class="ResultCard">
                         <h1 class="ResultTitle">{{$result->title}}</h1>
-                        <div>{{$result->abstract}}</div>
-                        <div>{{$result->year}}</div>
-                        <div>{{$result->event_type}}</div>
-                        <div>{{$result->pdf_name}}</div>
-                        <span>Authors:</span>
-                        <ul>
+                        <div class="QuickFacts">
+                            @if($result->year)
+                                <div class="QuickFact"><span class="lnr lnr-calendar-full"></span>{{$result->year}}</div>
+                            @endif
+                            @if($result->event_type)
+                                <div class="QuickFact"><span class="lnr lnr-earth"></span>{{$result->event_type}}</div>
+                            @endif
+                            <div class="QuickFact"><span class="lnr lnr-file-empty"></span> {{$result->pdf_name}}</div>
+                        </div>
+
+                        <span class="lnr lnr-user"></span>
+                        <ul class="AuthorList">
                             @foreach($result->authors as $author)
-                                <li>{{$author}}</li>
+                                <li class="QuickFact"> {{$author}}</li>
                             @endforeach
                         </ul>
+                        <div>{{$result->abstract}}</div>
                     </section>
                 </div>
         @endforeach
