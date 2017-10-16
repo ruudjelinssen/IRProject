@@ -5,7 +5,7 @@ import nltk
 import numpy as np
 from gensim import corpora, utils
 from gensim.models.phrases import Phrases
-from gensim.parsing import preprocess_string, DEFAULT_FILTERS
+from gensim.parsing import strip_punctuation, strip_multiple_whitespaces, strip_short, remove_stopwords, strip_numeric
 from nltk import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 
@@ -20,8 +20,8 @@ docno_to_index_file = os.path.join(base_dir, 'docno_to_index.npy')
 MIN_TOKEN_SIZE = 2
 BIGRAM_MIN_FREQ = 20
 TRIGRAM_MIN_FREQ = 20
-EXTREME_NO_BELOW = 30
-EXTREME_NO_ABOVE = 0.4
+EXTREME_NO_BELOW = 20
+EXTREME_NO_ABOVE = 0.5
 
 db = DataBase('../dataset/database.sqlite')
 
@@ -47,7 +47,7 @@ def _build_corpus_and_dictionary():
 		docno_to_index[_id] = i
 		i += 1
 		s = utils.to_unicode(paper.paper_text)
-		for f in DEFAULT_FILTERS:
+		for f in [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces, strip_numeric, remove_stopwords, strip_short]:
 			s = f(s)
 		documents.append(s)
 
@@ -87,7 +87,8 @@ def _build_corpus_and_dictionary():
 				documents[idx].append(token)
 	logging.info('Finished creating bigrams.')
 
-	logging.info('Creating trigrams of pairs of words and bigrams that appear at least {} times.'.format(TRIGRAM_MIN_FREQ))
+	logging.info(
+		'Creating trigrams of pairs of words and bigrams that appear at least {} times.'.format(TRIGRAM_MIN_FREQ))
 	trigram = Phrases(documents, min_count=TRIGRAM_MIN_FREQ)
 	for idx in range(len(documents)):
 		for token in trigram[documents[idx]]:
@@ -136,5 +137,8 @@ def get_from_file_or_build():
 		raise Exception(
 			'Amount of papers in database is not equal to corpus length. database: {}, corpus: {}'.format(
 				len(papers), len(corpus)))
+
+	logging.info('Number of unique tokens: {}'.format(len(dictionary)))
+	logging.info('Number of documents: {}'.format(len(corpus)))
 
 	return corpus, dictionary, docno_to_index

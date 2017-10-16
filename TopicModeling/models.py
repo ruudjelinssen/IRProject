@@ -30,9 +30,9 @@ def LDA(corpus, dictionary):
 
 	# Create the moddel
 	model = LdaModel(corpus=corpus, id2word=dictionary, chunksize=chunk_size,
-	                 alpha='auto', eta='auto',
-	                 iterations=iterations, num_topics=num_topics,
-	                 passes=passes, eval_every=eval_every)
+					 alpha='auto', eta='auto',
+					 iterations=iterations, num_topics=num_topics,
+					 passes=passes, eval_every=eval_every)
 
 	# Save the model to a file
 	model.save(LDA_MODEL_FILE)
@@ -72,15 +72,15 @@ def DTM(corpus, dictionary):
 	logging.debug(sum(time_slices))
 
 	model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
-	                                        time_slices, num_topics=20,
-	                                        id2word=dictionary)
+											time_slices, num_topics=20,
+											id2word=dictionary)
 	top_topics = model.top_topics(corpus)
 
 	logging.info('Top topics:')
 	logging.info(top_topics)
 
 
-def ATM(corpus, dictionary):
+def ATM(corpus, dictionary, docno_to_index):
 	logging.info('Building ATM model.')
 
 	# The parameters for the lda model
@@ -90,41 +90,34 @@ def ATM(corpus, dictionary):
 	iterations = 400
 	eval_every = None
 
+	# TODO run multiple times to check what parameters are best (see ATM notebook)
+
 	# Get all papers
 	db = DataBase('../dataset/database.sqlite')
 	papers = db.get_all()
-	papers2 = db.get_all_papers()  # This is wrong, but keep it in (table join in get_all() leaves out some papers)
 
 	# Create doc to author dictionary
-	doc2author = {}
-	i = 0
-	for d0, p0 in papers2.items():
-		authors = []
-		for d1, p1 in papers.items():
-			if d0 == d1:
-				authors = [a.name for a in p1.authors]
-		doc2author[i] = authors
-		i += 1
-
-	# Check if corpus and doc2author are the same size
-	if len(corpus) != len(doc2author):
-		raise Exception(
-			'Doc2Author does not have the same size as the corpus. doc2author: {}, corpus: {}'.format(
-				len(doc2author),
-				len(corpus)))
+	author2doc = {}
+	for _id, paper in papers.items():
+		for author in paper.authors:
+			# TODO: author names not always correct
+			if author.name not in author2doc:
+				author2doc[author.name] = []
+			author2doc[author.name].append(docno_to_index[_id])
+	logging.info('Number of different authors: {}'.format(len(author2doc)))
 
 	# Create the model
 	model = gensim.models.AuthorTopicModel(corpus,
-	                                       id2word=dictionary,
-	                                       num_topics=num_topics,
-	                                       doc2author=doc2author,
-	                                       alpha='auto', eta='auto',
-	                                       iterations=iterations,
-	                                       passes=passes,
-	                                       chunksize=chunk_size,
-	                                       eval_every=eval_every,
-	                                       serialized=True,
-	                                       serialization_path=SERIALIZATION_FILE)
+										   id2word=dictionary,
+										   num_topics=num_topics,
+										   author2doc=author2doc,
+										   alpha='auto', eta='auto',
+										   iterations=iterations,
+										   passes=passes,
+										   chunksize=chunk_size,
+										   eval_every=eval_every,
+										   serialized=True,
+										   serialization_path=SERIALIZATION_FILE)
 
 	# Save the model to a file
 	model.save(ATM_MODEL_FILE)
@@ -143,7 +136,8 @@ def ATM(corpus, dictionary):
 def Simularity(corpus, dictionary):
 	logging.info('Building sparse similarity matrix')
 
-	index = gensim.similarities.docsim.SparseMatrixSimilarity(corpus, num_features=len(dictionary), maintain_sparsity=True)
+	index = gensim.similarities.docsim.SparseMatrixSimilarity(corpus, num_features=len(dictionary),
+															  maintain_sparsity=True)
 
 	logging.info('Finished building sparse similarity matrix')
 	logging.info('Building matrix for document similarity')
@@ -169,6 +163,6 @@ if __name__ == '__main__':
 	# Moves to the topics_entry.py when everything is finished
 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 	corpus, dictionary, docno_to_index = preprocessing.get_from_file_or_build()
-	Simularity(corpus, dictionary)
-	# ATM(corpus, dictionary)
-	# DTM(corpus, dictionary)
+	# Simularity(corpus, dictionary)
+	ATM(corpus, dictionary, docno_to_index)
+# DTM(corpus, dictionary)
