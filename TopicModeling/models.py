@@ -53,37 +53,36 @@ DOC_SIMILARITY_FILE = os.path.join(base_dir, 'doc_similarity.matrix')
 
 
 def DTM(corpus, dictionary):
-	db = DataBase('../dataset/database.sqlite')
-	papers = db.get_all_papers()
+    db = DataBase('../dataset/database.sqlite')
+    papers = db.get_all_papers()
 
-	# documents = []
-	#
-	# for id, paper in papers.items():
-	#     documents.append(paper.year)
+    # documents = []
+    #
+    # for id, paper in papers.items():
+    #     documents.append(paper.year)
 
-	my_time_list = [1987]
-	for x in range(1, 30):
-		my_time_list.append(my_time_list[0] + x)
-	logging.debug(my_time_list)
+    my_time_list = [1987]
+    for x in range(1, 30):
+        my_time_list.append(my_time_list[0] + x)
+    logging.debug(my_time_list)
 
-	time_slices = []
-	for year in my_time_list:
-		papers_per_year = 0
-		for id, paper in papers.items():
-			if paper.year == year:
-				papers_per_year = papers_per_year + 1
-		time_slices.append(papers_per_year)
-	logging.debug(sum(time_slices))
+    time_slices = []
+    for year in my_time_list:
+        papers_per_year = 0
+        for id, paper in papers.items():
+            if paper.year == year:
+                papers_per_year = papers_per_year + 1
+        time_slices.append(papers_per_year)
+    logging.debug(sum(time_slices))
 
-	model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
+    model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
 											time_slices, num_topics=20,
 											id2word=dictionary)
-	top_topics = model.top_topics(corpus)
+    top_topics = model.show_topics()
 
-	logging.info('Top topics:')
-	logging.info(top_topics)
+    logging.info('Top topics:')
+    logging.info(top_topics)
 
-    # pprint(len(model.dtm_coherence(time=29)))
     model_vis_atri = model.dtm_vis(corpus,time=29)
 
 

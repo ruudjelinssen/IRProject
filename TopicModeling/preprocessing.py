@@ -4,10 +4,9 @@ import re
 
 import nltk
 import numpy as np
-from gensim import corpora
+from gensim import corpora,utils
 from gensim.models.phrases import Phrases
-from gensim.parsing import strip_punctuation, strip_multiple_whitespaces, strip_short, remove_stopwords, strip_numeric, \
-	utils
+from gensim.parsing import strip_punctuation, strip_multiple_whitespaces, strip_short, remove_stopwords, strip_numeric
 from nltk import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 
