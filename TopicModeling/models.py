@@ -3,12 +3,15 @@ import re
 
 import gensim
 import os
+import pyLDAvis
+import pandas as pd
 
 import numpy as np
 from gensim.models import LdaModel
 
 from TopicModeling import preprocessing
 from common.database import DataBase
+from pprint import pprint
 
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
 LDA_MODEL_FILE = os.path.join(base_dir, 'lda.model')
@@ -80,6 +83,13 @@ def DTM(corpus, dictionary):
 	logging.info('Top topics:')
 	logging.info(top_topics)
 
+    # pprint(len(model.dtm_coherence(time=29)))
+    model_vis_atri = model.dtm_vis(corpus,time=29)
+
+
+    DTM_vis = pyLDAvis.prepare(doc_lengths=model_vis_atri[2],doc_topic_dists=model_vis_atri[0],topic_term_dists=model_vis_atri[1],vocab=model_vis_atri[4],term_frequency=model_vis_atri[3])
+    pyLDAvis.show(DTM_vis)
+
 
 def ATM(corpus, dictionary, docno_to_index):
 	logging.info('Building ATM model.')
@@ -142,8 +152,7 @@ def ATM(corpus, dictionary, docno_to_index):
 if __name__ == '__main__':
 	# Test your models here
 	# Moves to the topics_entry.py when everything is finished
-	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
-	                    level=logging.INFO)
+	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 	corpus, dictionary, docno_to_index = preprocessing.get_from_file_or_build()
 	# Simularity(corpus, dictionary)
 	ATM(corpus, dictionary, docno_to_index)
