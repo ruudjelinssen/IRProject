@@ -88,6 +88,7 @@ public class FilterReferences {
     public static Map<Integer, List<Integer>> potentialMatches(Map<Integer, String[]> titles, Map<Integer, String[]> refBlocks){
         Map<Integer, List<Integer>> results = new HashMap();
         for(Entry<Integer, String[]> titleEntry : titles.entrySet()){
+            //if(titleEntry.getKey() != 2) continue;
             for(Entry<Integer, String[]> refBlockEntry : refBlocks.entrySet()){
                 if(isMatch(titleEntry, refBlockEntry)){
                     if(!results.containsKey(titleEntry.getKey())){
@@ -106,17 +107,21 @@ public class FilterReferences {
         }
         if(title.getValue().length > 2){
             int counter = 0;
+            int shortWords = 0;
             for(String word : title.getValue()){
                 if(word.length() < 4){
+                    shortWords++;
                     continue;
                 }
                 for(String word2 : refBlock.getValue()){
                     if(word.equals(word2)){
                         counter++;
+                        break;
                     }
                 }
             }
-            return title.getValue().length - counter < 3;
+            if(counter < 2) return false;
+            return (title.getValue().length - shortWords) - counter < 3;
         }
         //In case of 1 word
         if(title.getValue().length == 1){
@@ -146,20 +151,139 @@ public class FilterReferences {
         return refBlock.replaceAll("\\.|;|:|,|!|\t|\n|\"","");
     }
     
+    public static Map<Integer, List<Integer>> reduceMatches(Map<Integer, String[]> references){
+        Map<Integer, String[]> normalizedTitles = normalizeTitles(references);
+        Map<Integer, String[]> normalizedReferences = normalizeReferences(references);       
+        Map<Integer, List<Integer>> matches = potentialMatches(normalizedTitles, normalizedReferences);
+        
+        Map<Integer, List<Integer>> goodMatches = new HashMap<>();
+        
+        for(Entry<Integer, List<Integer>> matchList : matches.entrySet()){
+            for(Integer paperId : matchList.getValue()){
+                if(isGoodMatch(normalizedTitles.get(matchList.getKey()), normalizedReferences.get(paperId))) { //Is this really matchList.getKey() twice???
+                    if (!goodMatches.containsKey(matchList.getKey())) {
+                        goodMatches.put(matchList.getKey(), new ArrayList<>());
+                    }
+                    
+                    goodMatches.get(matchList.getKey()).add(paperId);
+                }
+            }
+        }
+        
+        return goodMatches;
+        //
+    }
+        
+    private static boolean isGoodMatch(String[] title, String[] referenceBlock){
+        if (title.length > 2) {
+            for (int i = 0; i < title.length; i++) {
+                int k;
+                if (title[i].length() > 3) {
+                    for (int j = 0; j < referenceBlock.length; j++) {
+                        if (title[i].equals(referenceBlock[j])) {
+                            k = 1;
+                            while (i + k < title.length && j + k < referenceBlock.length) {
+                                if (title[i + k].length() > 3 && title[i + k].equals(referenceBlock[j + k])) {
+                                    return true;
+                                }
+                                k++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    public static Map<Integer, List<Integer>> exactMatches(Map<Integer, String[]> references){
+        Map<Integer, String[]> normalizedTitles = normalizeTitles(references);
+        Map<Integer, String[]> normalizedReferences = normalizeReferences(references);       
+        Map<Integer, List<Integer>> matches = reduceMatches(references);
+        
+        Map<Integer, List<Integer>> exactMatches = new HashMap<>();
+        
+        for(Entry<Integer, List<Integer>> matchList : matches.entrySet()){
+            for(Integer paperId : matchList.getValue()){
+                if(isExactMatch(normalizedTitles.get(matchList.getKey()), normalizedReferences.get(paperId))) {
+                    if (!exactMatches.containsKey(matchList.getKey())) {
+                        exactMatches.put(matchList.getKey(), new ArrayList<>());
+                    }
+                    
+                    exactMatches.get(matchList.getKey()).add(paperId);
+                }
+            }
+        }
+        
+        return exactMatches;
+        //
+    }
+        
+    private static boolean isExactMatch(String[] title, String[] referenceBlock){
+        if (title.length > 2) {
+            for (int i = 0; i < title.length; i++) {
+                int k;
+                if (title[i].length() > 3) {
+                    for (int j = 0; j < referenceBlock.length; j++) {
+                        if (title[i].equals(referenceBlock[j])) {
+                            k = 1;
+                            while (i + k < title.length && j + k < referenceBlock.length) {
+                                if (title[i + k].length() > 3 && title[i + k].equals(referenceBlock[j + k])) {
+                                    return indexMatch(i, j, k, title, referenceBlock);
+                                }
+                                k++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
     /**
-     * Titel: 1,2 woord(en) -> Altijd lievenstein
-     * Titel > 2 woorden -> Maximaal 2 woorden met 2 typos per woord (Er is dus altijd minstens 1 exacte match)
-     * -> Extacte match moet een woord zijn met tenminste 4 tekens
+     * 
+     * @param i index of a match in title
+     * @param j index of a match in ref
+     * @param k offset between 2 matches
+     * @param title
+     * @param referenceBlock
+     * @return 
      */
+    private static boolean indexMatch(int i, int j, int k, String[] title, String[] referenceBlock){
+        //For each word in title with > 3 (not i, i+k)
+        //j < i return false (ioob)
+        if(j < i){
+            return false;
+        }
+        //refBlock.length - j < title.length - i -> no solution (ioob)
+        if(referenceBlock.length - j < title.length - i){
+            return false;
+        }
+        int offset;
+        Levenshtein l = new Levenshtein();
+        int count = 0;
+        for(int u = 0; u < title.length; u++){
+            if(u == i || u == i+k) continue;
+            offset = u-i;
+            if(l.distance(title[i+offset], referenceBlock[j+offset]) < 2){
+                count++;
+            }
+        }
+        if( title.length - 2 - count == 0){
+            return true;
+        }
+        return false;
+    }
     
     public static void main(String[] args) {
         System.out.println(removeInterpunction("Hello J.Absfasdf \" ;;;::: ,.,.,.,."
                 + "\t sdfasf,.!"));
         Map<Integer, String[]> references = WebInfo.getReferenceBlocks("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
-        Map<Integer, List<Integer>> matches = potentialMatches(normalizeTitles(references), normalizeReferences(references));
-        System.out.println(references.get(1)[1]);
+        Map<Integer, List<Integer>> matches = exactMatches(references);
         List<String> matchList = new ArrayList();
-        for(Integer id : matches.get(1)){
+        System.out.println(references.get(2560)[1]);
+        for(Integer id: matches.get(2560)){
             matchList.add(references.get(id)[2]);
         }
         return;
