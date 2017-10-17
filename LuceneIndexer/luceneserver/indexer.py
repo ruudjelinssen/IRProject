@@ -11,14 +11,14 @@ The standard analyzer, as part of its job, removes predefined common stop words 
 import os
 import sys
 
-from helpers import constants
+from ..helpers import constants
 
 # Please don't delete me! I'm important!
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig, Term
+from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField, FieldType
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig, Term, IndexOptions
 from org.apache.lucene.store import SimpleFSDirectory
 
 
@@ -114,8 +114,17 @@ class Indexer(object):
             document.add(StoredField('author_id', str(author.id)))
             concat = concat + ' ' + author.name
 
-        # Finally concatenate every field together and then add it as an unstored field 'content'
+        # Finally concatenate every field together and then add it as a field called 'content' with term vectors enabled
 
-        document.add(TextField("content", concat, Field.Store.NO))
+        field_type = FieldType()
+        field_type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS)
+        field_type.setStored(True)
+        field_type.setStoreTermVectors(True)
+        field_type.setTokenized(True)
+        field_type.setStoreTermVectorOffsets(True)
+
+        field = Field('content', concat, field_type)
+
+        document.add(field)
 
         self.writer.addDocument(document)

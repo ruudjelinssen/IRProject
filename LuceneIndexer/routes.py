@@ -8,7 +8,7 @@ Define the routes that we want the server to serve to the user
 from flask import request
 from flask_restful import Resource
 
-from luceneserver.search import Search
+from .luceneserver.search import Search
 
 
 class Papers(Resource):

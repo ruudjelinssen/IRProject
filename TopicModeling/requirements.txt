@@ -1,9 +1,11 @@
 # Gensim
 gensim
-stop-words
+pandas
 
 # Web server
 flask
 flask-jsonpify
 flask-sqlalchemy
 flask-restful
+
+pyLDAvis
