@@ -41,7 +41,7 @@ def get_lda_coherence_scores(corpus, dictionary, _range=(5, 100, 5), passes=10):
 
 		# Create coherence model
 		cm = CoherenceModel(model, corpus=corpus, dictionary=dictionary,
-		                    coherence='c_v')
+		                    coherence='u_mass')
 		ch = cm.get_coherence()
 
 		logging.info('Coherence for {} topics: {}'.format(i, ch))
