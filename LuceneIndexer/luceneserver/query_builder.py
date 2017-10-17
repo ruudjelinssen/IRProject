@@ -18,14 +18,15 @@ in certain boxes.
 
 import lucene
 
-from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery
 from org.apache.lucene.document import IntPoint
 from org.apache.lucene.index import Term
+from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery
+from org.apache.lucene.search.spans import SpanMultiTermQueryWrapper, SpanNearQuery
 
 
 class QueryBuilder(object):
 
-    def __init__(self):
+    def __init__(self, query_params):
         """
         Construct the class with some default settings
         """
@@ -40,48 +41,33 @@ class QueryBuilder(object):
 
         self.boolean_query_builder = BooleanQuery.Builder()
 
-    def build_query(self, query_params):
+        self.query_params = query_params
+
+    def build_query(self):
         """
         Set the search class properties based on the passed in parameters
 
-        :param query_params:
         :return:
         """
 
-        if 'author' in query_params:
-            self.__build_author_information(query_params['author'])
+        if 'author' in self.query_params:
+            self.__construct_field('author', True)
             self.has_author = True
-            self.is_blank_query = False
 
-        if 'title' in query_params:
-            self.__build_title_information(query_params['title'])
-            self.is_blank_query = False
-
-        if 'abstract' in query_params:
-            self.__build_abstract_information(query_params['abstract'])
-            self.is_blank_query = False
-
-        if 'event_type' in query_params:
-            self.__build_event_type_information(query_params['event_type'])
-            self.is_blank_query = False
-
-        if 'paper_text' in query_params:
-            self.__build_paper_text_information(query_params['paper_text'])
-            self.is_blank_query = False
-
-        if 'year' in query_params:
-            self.__check_year_range(query_params['year'])
+        if 'year' in self.query_params:
+            self.__check_year_range(self.query_params['year'])
             self.has_year = True
-            self.is_blank_query = False
 
-        if 'pdf_name' in query_params:
-            self.__build_pdf_name_information(query_params['pdf_name'])
-            self.is_blank_query = False
+        self.__construct_field('paper_title')
+        self.__construct_field('abstract')
+        self.__construct_field('event_type')
+        self.__construct_field('paper_text')
+        self.__construct_field('pdf_name')
 
-        if 'query' in query_params:
-            self.__build_free_text_query(query_params['query'])
+        if 'query' in self.query_params:
+            self.__build_free_text_query(self.query_params['query'])
 
-        if not query_params:
+        if not self.query_params:
             self.__check_blank('')
 
         return self.boolean_query_builder.build()
@@ -98,61 +84,129 @@ class QueryBuilder(object):
         self.__check_author_match(query_string)
         self.__check_rest_text(query_string)
 
-    def __build_author_information(self, author_name):
+    @staticmethod
+    def construct_multi_term_span_query(field_name, term_text):
+        """
 
-        author_name_parts = author_name.split(' ')
+        :param field_name:
+        :param term_text:
+        :return:
+        """
 
-        for part in author_name_parts:
-            fuzzy_query = FuzzyQuery(Term('author', part), 2)
+        span_query_builder = SpanNearQuery.Builder(field_name, False)
+        span_query_builder.setSlop(0)
+        term_parts = term_text.split(' ')
+
+        for part in term_parts:
+            fuzzy_query = SpanMultiTermQueryWrapper(FuzzyQuery(Term(field_name, part), 2))
+            span_query_builder.addClause(fuzzy_query)
+
+        return span_query_builder.build()
+
+    @staticmethod
+    def construct_multi_term_query(field_name, term_text):
+        """
+
+        :param field_name:
+        :param term_text:
+        :return:
+        """
+
+        term_query_builder = BooleanQuery.Builder()
+        term_parts = term_text.split(' ')
+
+        for part in term_parts:
+            fuzzy_query = FuzzyQuery(Term(field_name, part), 2)
+            term_query_builder.add(fuzzy_query, BooleanClause.Occur.MUST)
+
+        return term_query_builder.build()
+
+    @staticmethod
+    def construct_or_query(field_name, text, is_phrase = False):
+
+        or_split = text.split(' or ')
+        or_split = [x.strip() for x in or_split if x.strip()]
+
+        or_query_builder = BooleanQuery.Builder()
+
+        for or_part in or_split:
+
+            if len(or_part.split(' ')) == 1:
+                or_query_builder.add(FuzzyQuery(Term(field_name, or_split[0]), 2), BooleanClause.Occur.SHOULD)
+
+            else:
+
+                if is_phrase is True:
+                    span_query = QueryBuilder.construct_multi_term_span_query(field_name, or_part)
+                else:
+                    span_query = QueryBuilder.construct_multi_term_query(field_name, or_part)
+
+                or_query_builder.add(span_query, BooleanClause.Occur.SHOULD)
+
+        return or_query_builder.build()
+
+    def __construct_field(self, field_name, is_phrase = False):
+        """
+        Generic wrapper to be able to construct the query for a particular field
+
+        :param field_name:
+        :return:
+        """
+
+        # Don't do anything if no text is given for this field
+
+        if field_name not in self.query_params:
+            return
+
+        text = self.query_params[field_name]
+        if not text or not text.strip():
+            return
+
+        text = text.strip().lower()
+        self.is_blank_query = False
+
+        # If there is only one term for this field, add it to the builder directly
+
+        if len(text.split(' ')) == 1:
+
+            fuzzy_query = FuzzyQuery(Term(field_name, text), 2)
             self.boolean_query_builder.add(fuzzy_query, BooleanClause.Occur.MUST)
+            return
 
-    def __build_title_information(self, title):
+        # Get the available AND splits
 
-        title_parts = title.split(' ')
+        and_split = text.split(' and ')
+        and_split = [x.strip() for x in and_split if x.strip()]
 
-        for part in title_parts:
-            term_query = TermQuery(Term('paper_title', part))
-            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+        if len(and_split) > 1:
 
-    def __build_abstract_information(self, query_string):
+            for and_part in and_split:
 
-        query_string_parts = query_string.split(' ')
+                # Now we have either author names, or author names separated with ors
 
-        for part in query_string_parts:
-            term_query = TermQuery(Term('abstract', part))
-            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+                or_query = QueryBuilder.construct_or_query(field_name, and_part, is_phrase)
+                self.boolean_query_builder.add(or_query, BooleanClause.Occur.MUST)
+            return
 
-    def __build_event_type_information(self, query_string):
+        # Get the available OR splits
 
-        query_string_parts = query_string.split(' ')
+        or_split = text.split(' or ')
+        or_split = [x.strip() for x in or_split if x.strip()]
 
-        for part in query_string_parts:
-            term_query = TermQuery(Term('event_type', part))
-            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+        if len(or_split) > 1:
 
-    def __build_paper_text_information(self, query_string):
+            or_query = QueryBuilder.construct_or_query(field_name, text, is_phrase)
+            self.boolean_query_builder.add(or_query, BooleanClause.Occur.MUST)
+            return
 
-        query_string_parts = query_string.split(' ')
+        if len(text.split(' ')) > 1:
 
-        for part in query_string_parts:
-            term_query = TermQuery(Term('paper_text', part))
-            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
-
-    def __build_year_information(self, query_string):
-
-        query_string_parts = query_string.split(' ')
-
-        for part in query_string_parts:
-            term_query = TermQuery(Term('year', part))
-            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
-
-    def __build_pdf_name_information(self, query_string):
-
-        query_string_parts = query_string.split(' ')
-
-        for part in query_string_parts:
-            term_query = TermQuery(Term('pdf_name', part))
-            self.boolean_query_builder.add(term_query, BooleanClause.Occur.MUST)
+            if is_phrase is True:
+                span_query = QueryBuilder.construct_multi_term_span_query(field_name, text)
+            else:
+                span_query = QueryBuilder.construct_multi_term_query(field_name, text)
+            self.boolean_query_builder.add(span_query, BooleanClause.Occur.MUST)
+            return
 
     def __check_blank(self, query_string):
         """
@@ -201,7 +255,7 @@ class QueryBuilder(object):
             self.query_string = parts[0].strip()
             author_name = parts[1].strip()
 
-            self.__build_author_information(author_name)
+            self.__construct_field('author')
 
     def __check_rest_text(self, query_string):
         """

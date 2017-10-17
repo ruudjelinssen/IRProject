@@ -68,8 +68,9 @@ class Search:
 
         retrieved_files = []
 
-        qb = QueryBuilder()
-        query = qb.build_query(self.query_params)
+        qb = QueryBuilder(self.query_params)
+        query = qb.build_query()
+        print(query)
 
         hits = self.searcher.search(query, 10)
         score_docs = hits.scoreDocs
