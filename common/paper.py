@@ -34,7 +34,8 @@ class Paper:
         self.paper_text = paper_info[6]
 
         self.authors = []
-        self.add_author([author_info[0], author_info[1]])
+        if author_info is not None:
+            self.add_author([author_info[0], author_info[1]])
 
     def add_author(self, author_info):
         """
