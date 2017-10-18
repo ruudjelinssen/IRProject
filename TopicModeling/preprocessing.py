@@ -20,7 +20,7 @@ docno_to_index_file = os.path.join(base_dir, 'docno_to_index.npy')
 # Settings for the preproccessor
 BIGRAM_MIN_FREQ = 20
 EXTREME_NO_BELOW = 60
-EXTREME_NO_ABOVE = 0.5
+EXTREME_NO_ABOVE = 0.15
 
 db = DataBase('../dataset/database.sqlite')
 

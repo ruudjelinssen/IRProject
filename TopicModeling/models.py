@@ -1,9 +1,11 @@
 import logging
 import os
 import re
+import threading
 
 import gensim
-import pyLDAvis
+import math
+import pyLDAvis.gensim
 from gensim.models import CoherenceModel, LdaModel
 
 from TopicModeling import preprocessing
@@ -18,8 +20,9 @@ SPARSE_SIMILARITY_FILE = os.path.join(base_dir, 'sparse_similarity.index')
 DOC_SIMILARITY_FILE = os.path.join(base_dir, 'doc_similarity.matrix')
 
 # The parameters for the models
-passes = 10
+passes = 20
 eval_every = 0
+iterations = 100
 
 
 def get_lda_coherence_scores(corpus, dictionary, _range=(5, 100, 5), passes=10):
@@ -33,15 +36,15 @@ def get_lda_coherence_scores(corpus, dictionary, _range=(5, 100, 5), passes=10):
 
 		# Create the model
 		model = LdaModel(corpus=corpus, id2word=dictionary, alpha='auto',
-		                 eta='auto', num_topics=i, passes=passes,
-		                 eval_every=eval_every)
+						 eta='auto', num_topics=i, passes=passes,
+						 eval_every=eval_every)
 
 		# Save the model to a file
 		model.save('{}-{}-{}'.format(LDA_MODEL_FILE, 'test', i))
 
 		# Create coherence model
 		cm = CoherenceModel(model, corpus=corpus, dictionary=dictionary,
-		                    coherence='u_mass')
+							coherence='u_mass')
 		ch = cm.get_coherence()
 
 		logging.info('Coherence for {} topics: {}'.format(i, ch))
@@ -54,6 +57,24 @@ def get_lda_coherence_scores(corpus, dictionary, _range=(5, 100, 5), passes=10):
 	return outputs
 
 
+def visualize_model(model, corpus, dictionary, port=8000):
+	vis = pyLDAvis.gensim.prepare(model, corpus, dictionary)
+	pyLDAvis.show(vis, port=port)
+
+
+def visualize_models(model_list, corpus, dictionary):
+	i = 0
+	for m in model_list:
+		t = threading.Thread(target=visualize_model, args=(m, corpus, dictionary, 8000+i,))
+		t.start()
+
+
+def get_perplexity(model, chunk):
+	log_perplexity = model.log_perplexity(chunk)
+	perplexity = math.pow(2, -log_perplexity)
+	return perplexity
+
+
 def LDA(corpus, dictionary, num_topics):
 	if os.path.exists(LDA_MODEL_FILE):
 		logging.info(
@@ -64,8 +85,8 @@ def LDA(corpus, dictionary, num_topics):
 
 		# Create the model
 		model = LdaModel(corpus=corpus, id2word=dictionary, alpha='auto',
-		                 eta='auto', num_topics=num_topics, passes=passes,
-		                 eval_every=eval_every)
+						 eta='auto', num_topics=num_topics, passes=passes,
+						 eval_every=eval_every, iterations=iterations)
 
 		# Save the model to a file
 		model.save(LDA_MODEL_FILE)
@@ -111,8 +132,8 @@ def DTM(corpus, dictionary):
 		logging.debug(sum(time_slices))
 
 		model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
-		                                        time_slices, num_topics=20,
-		                                        id2word=dictionary)
+												time_slices, num_topics=20,
+												id2word=dictionary)
 		top_topics = model.show_topics()
 
 		logging.info('Top topics:')
@@ -121,10 +142,10 @@ def DTM(corpus, dictionary):
 		model_vis_atri = model.dtm_vis(corpus, time=29)
 
 		DTM_vis = pyLDAvis.prepare(doc_lengths=model_vis_atri[2],
-		                           doc_topic_dists=model_vis_atri[0],
-		                           topic_term_dists=model_vis_atri[1],
-		                           vocab=model_vis_atri[4],
-		                           term_frequency=model_vis_atri[3])
+								   doc_topic_dists=model_vis_atri[0],
+								   topic_term_dists=model_vis_atri[1],
+								   vocab=model_vis_atri[4],
+								   term_frequency=model_vis_atri[3])
 		pyLDAvis.show(DTM_vis)
 
 
@@ -190,9 +211,5 @@ if __name__ == '__main__':
 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 	corpus, dictionary, docno_to_index = preprocessing.get_from_file_or_build()
 
-	scores = get_lda_coherence_scores(corpus, dictionary)
-	print(scores)
-
-	with open(os.path.join(base_dir, 'coherence.output'), 'w') as f:
-		for s in scores:
-			f.write('{}\t{}\t{}\n'.format(s[0], s[1], s[2]))
+	model = LDA(corpus, dictionary, 20)
+	visualize_model(model, corpus, dictionary)

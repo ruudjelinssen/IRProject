@@ -8,4 +8,5 @@ flask-jsonpify
 flask-sqlalchemy
 flask-restful
 
+# Visualization
 pyLDAvis
