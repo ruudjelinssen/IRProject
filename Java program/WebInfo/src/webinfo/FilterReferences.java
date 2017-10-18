@@ -336,9 +336,10 @@ public class FilterReferences {
     
     public static void checkResult(Map<Integer, String[]> references, Map<Integer, List<Integer>> matches){
         List<String> matchList = new ArrayList();
-        System.out.println(references.get(1832)[1]);
-        System.out.println(references.get(1832)[3]);
-        for(Integer id: matches.get(1832)){
+        int paperId = 3107;
+        System.out.println(references.get(paperId)[1]);
+        System.out.println(references.get(paperId)[3]);
+        for(Integer id: matches.get(paperId)){
             matchList.add(references.get(id)[2]);
         }
         return;
