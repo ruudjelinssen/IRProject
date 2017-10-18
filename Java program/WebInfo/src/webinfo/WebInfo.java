@@ -110,6 +110,38 @@ public class WebInfo {
         return list;
     }
     
+    private static Map<Integer, List<String>> getPaperAuthorsMap(String path, Map<Integer, String> authors) {
+        File csv = new File(path + "paper_authors.csv");
+        Map<Integer, List<String>> map = new HashMap<>();
+        
+        try {
+            try (BufferedReader reader = new BufferedReader(new FileReader(csv))) {
+                reader.readLine();
+                
+                String line;
+                String[] parts;
+                int p_id, a_id;
+                
+                while ((line = reader.readLine()) != null) {
+                    parts = line.split(",");
+                    
+                    p_id = Integer.parseInt(parts[1]);
+                    a_id = Integer.parseInt(parts[2]);
+                    
+                    if (!map.containsKey(p_id)) {
+                        map.put(p_id, new ArrayList<>());
+                    }
+                    
+                    map.get(p_id).add(authors.get(a_id));
+                }
+            }
+        } catch (IOException e) {
+            System.err.println(e);
+        }
+        
+        return map;
+    }
+    
     private static Map<Integer, String[]> getPapers(String path) {
         File csv = new File(path + "papers.csv");
         Map<Integer, String[]> map = new HashMap<>();
@@ -270,6 +302,8 @@ public class WebInfo {
         String url = "jdbc:sqlite:" + path + "database.sqlite";
         String query = "SELECT id,year,title,paper_text FROM papers";
         
+        Map<Integer, List<String>> paperAuthors = getPaperAuthorsMap(path, getAuthors(path));
+        
         Map<Integer, String[]> map = new HashMap<>();
         
         try (Connection conn = DriverManager.getConnection(url);
@@ -282,7 +316,8 @@ public class WebInfo {
                 parts = new String[]{
                     result.getString("year"),
                     result.getString("title"),
-                    "ref"};
+                    "ref",
+                    "authorname"};
                 
                 replace = result.getString("paper_text").toLowerCase().split("references");
                 if (replace[replace.length - 1].contains("bibliography")) {
@@ -345,6 +380,9 @@ public class WebInfo {
                 parts[2] = refBlock;
                 
                 if (replace.length > 1) {
+                    if (paperAuthors.containsKey(result.getInt("id"))) {
+                        parts[3] = String.join(";", paperAuthors.get(result.getInt("id")));
+                    }
                     map.put(result.getInt("id"), parts);
                 }
             }
