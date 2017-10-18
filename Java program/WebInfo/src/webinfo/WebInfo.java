@@ -110,7 +110,7 @@ public class WebInfo {
         return list;
     }
     
-    private static Map<Integer, List<String>> getPaperAuthorsMap(String path, Map<Integer, String> authors) {
+    public static Map<Integer, List<String>> getPaperAuthorsMap(String path, Map<Integer, String> authors) {
         File csv = new File(path + "paper_authors.csv");
         Map<Integer, List<String>> map = new HashMap<>();
         

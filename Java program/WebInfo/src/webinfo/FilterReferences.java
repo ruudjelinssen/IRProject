@@ -81,6 +81,7 @@ public class FilterReferences {
         Map<Integer, String[]> results = new HashMap();
         for(Entry<Integer, String[]> rel : references.entrySet()){
             results.put(rel.getKey(), removeInterpunction(rel.getValue()[1]).toLowerCase().split(" "));
+            
         }
         return results;
     }
@@ -148,7 +149,9 @@ public class FilterReferences {
     }
     
     private static String removeInterpunction(String refBlock) {
-        return refBlock.replaceAll("\\.|;|:|,|!|\t|\n|\"","");
+        refBlock = refBlock.replaceAll("\\(|\\)", " ");
+        refBlock = refBlock.replaceAll("\\.|;|:|,|!|\t|\n|\"","");
+        return refBlock.replaceAll("\\s\\s", " ");
     }
     
     public static Map<Integer, List<Integer>> reduceMatches(Map<Integer, String[]> references){
@@ -240,6 +243,7 @@ public class FilterReferences {
         }
         return false;
     }
+
     
     /**
      * 
@@ -276,14 +280,65 @@ public class FilterReferences {
         return false;
     }
     
+    /**
+     * Given an exact paper-paper match, check if author also appears
+     * @param references
+     * @return 
+     */
+    private static Map<Integer, List<Integer>> authorAndPaperMatch(Map<Integer, String[]> references){
+        Map<Integer, List<Integer>> matches = exactMatches(references);
+        Map<Integer, String[]> normalizedReferences = normalizeReferences(references);
+        Map<Integer, List<Integer>> results = new HashMap();
+        for(Entry<Integer, List<Integer>> match : matches.entrySet()){
+            for(int paperId : match.getValue()){
+                if(isAuthorExtactMatch(references.get(match.getKey())[3], normalizedReferences.get(paperId))){
+                    if (!results.containsKey(match.getKey())) {
+                        results.put(match.getKey(), new ArrayList<>());
+                    }
+                    
+                    results.get(match.getKey()).add(paperId);
+                }
+            }
+        }
+
+        
+        return results;
+    }
+    
+    private static boolean isAuthorExtactMatch(String authors, String[] referenceBlock) {
+        Levenshtein l = new Levenshtein();
+        //Split authors
+        String[] author = authors.split(";");
+        for(String a : author){
+            String[] name = a.split(" ");
+            String lastname = name[name.length-1].toLowerCase();
+            //Find lastname in reference block
+            int maxDist = (int)Math.min(2, Math.floor(0.25*lastname.length()));
+            for(String word : referenceBlock){
+                if(l.distance(lastname, word) <= maxDist){
+                    return true;
+                }
+            }
+        }
+        //Find their last name in referenceblock
+        return false;
+    }
+    
     public static void main(String[] args) {
         System.out.println(removeInterpunction("Hello J.Absfasdf \" ;;;::: ,.,.,.,."
-                + "\t sdfasf,.!"));
+                + "\t sdfa(1994)sf,.!"));
         Map<Integer, String[]> references = WebInfo.getReferenceBlocks("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
-        Map<Integer, List<Integer>> matches = exactMatches(references);
+        Map<Integer, List<Integer>> matches = authorAndPaperMatch(references);
         List<String> matchList = new ArrayList();
-        System.out.println(references.get(2560)[1]);
-        for(Integer id: matches.get(2560)){
+        checkResult(references, matches);
+        return;
+    }
+    
+    public static void checkResult(Map<Integer, String[]> references, Map<Integer, List<Integer>> matches){
+        List<String> matchList = new ArrayList();
+        System.out.println(references.get(1832)[1]);
+        System.out.println(references.get(1832)[3]);
+        for(Integer id: matches.get(1832)){
             matchList.add(references.get(id)[2]);
         }
         return;
