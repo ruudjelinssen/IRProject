@@ -285,7 +285,7 @@ public class FilterReferences {
      * @param references
      * @return 
      */
-    private static Map<Integer, List<Integer>> authorAndPaperMatch(Map<Integer, String[]> references){
+    public static Map<Integer, List<Integer>> authorAndPaperMatch(Map<Integer, String[]> references){
         Map<Integer, List<Integer>> matches = exactMatches(references);
         Map<Integer, String[]> normalizedReferences = normalizeReferences(references);
         Map<Integer, List<Integer>> results = new HashMap();
