@@ -39,10 +39,11 @@ public class WebInfo {
      */
     public static void main(String[] args) throws Exception {
         //createGraph(getAuthors(), getPapersSQLite(), getPaperAuthors());
-        Map<Integer, String[]> references = getReferenceBlocks("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
+        /*Map<Integer, String[]> references = getReferenceBlocks("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
         FilterReferences filter = new FilterReferences();
         Map<Integer, String> authors = getAuthors("C:\\Users\\Arjan\\Documents\\IRProject\\Dataset\\");
-        List<Map.Entry<Integer, Integer>> results = filter.filter(references, authors);
+        List<Map.Entry<Integer, Integer>> results = filter.filter(references, authors);*/
+        addPaperToPaperEdges();
     }
     
     private static Map<Integer, String> getAuthors(String path) {
@@ -110,7 +111,7 @@ public class WebInfo {
         return list;
     }
     
-    private static Map<Integer, List<String>> getPaperAuthorsMap(String path, Map<Integer, String> authors) {
+    public static Map<Integer, List<String>> getPaperAuthorsMap(String path, Map<Integer, String> authors) {
         File csv = new File(path + "paper_authors.csv");
         Map<Integer, List<String>> map = new HashMap<>();
         
@@ -291,6 +292,63 @@ public class WebInfo {
         }
         
         return map;
+    }
+    
+    private static void addPaperToPaperEdges() throws CommandException {
+        // (key)-[:ReferencedIn]->(value)
+        Map<Integer, List<Integer>> authorAndPaperMatch = FilterReferences
+                .authorAndPaperMatch(getReferenceBlocks("D:\\marcbrouwer\\Documents\\TUe\\2IMM15 - Web information retrieval and data mining\\nips-papers\\"));
+        Logger logger = new Logger() {
+            @Override
+            public PrintStream getOutputStream() {
+                return null;
+            }
+
+            @Override
+            public PrintStream getErrorStream() {
+                return null;
+            }
+
+            @Override
+            public void printError(Throwable thrwbl) {
+                
+            }
+
+            @Override
+            public void printError(String string) {
+                
+            }
+
+            @Override
+            public void printOut(String string) {
+                
+            }
+
+            @Override
+            public Format getFormat() {
+                return null;
+            }
+
+            @Override
+            public void setFormat(Format format) {
+                
+            }
+
+            @Override
+            public boolean isDebugEnabled() {
+                return false;
+            }
+        };
+        CypherShell cs = new CypherShell(logger);
+        cs.connect(new ConnectionConfig(logger, "bolt://", "127.0.0.1", 7687, "neo4j", "****", false));
+        
+        for (Entry<Integer, List<Integer>> entry : authorAndPaperMatch.entrySet()) {
+            for (Integer i : entry.getValue()) {
+                cs.execute("MATCH (p1:Paper {p_id: " + entry.getKey() + "}), "
+                        + "(p2:Paper {p_id: " + i + "}) "
+                        + "CREATE (p1)-[:ReferencedIn]->(p2);\n");
+            }
+        }
     }
     
     /**
