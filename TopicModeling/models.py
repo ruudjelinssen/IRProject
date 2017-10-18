@@ -5,19 +5,22 @@ import threading
 
 import gensim
 import math
+
+import numpy as np
 import pyLDAvis.gensim
 from gensim.models import CoherenceModel, LdaModel
 
 from TopicModeling import preprocessing
 from common.database import DataBase
 
+# The files
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
 LDA_MODEL_FILE = os.path.join(base_dir, 'lda.model')
 DTM_MODEL_FILE = os.path.join(base_dir, 'dtm.model')
 ATM_MODEL_FILE = os.path.join(base_dir, 'atm.model')
 SERIALIZATION_FILE = os.path.join(base_dir, 'atm-ser.model')
 SPARSE_SIMILARITY_FILE = os.path.join(base_dir, 'sparse_similarity.index')
-DOC_SIMILARITY_FILE = os.path.join(base_dir, 'doc_similarity.matrix')
+PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic.matrix')
 
 # The parameters for the models
 passes = 20
@@ -25,13 +28,14 @@ eval_every = 0
 iterations = 100
 
 
-def get_lda_coherence_scores(corpus, dictionary, _range=(5, 100, 5), passes=10):
+def get_lda_coherence_scores(corpus, dictionary, _range=range(5, 100, 5)):
+	"""Returns a list of coherence scores for different number of topics."""
 	logging.info('Getting coherence scores from LDA models.')
 
 	outputs = []
 
 	# Loop over num_topics
-	for i in range(_range[0], _range[1], _range[2]):
+	for i in _range:
 		logging.info('Creating LDA model for num_topics={}.'.format(i))
 
 		# Create the model
@@ -75,7 +79,53 @@ def get_perplexity(model, chunk):
 	return perplexity
 
 
-def LDA(corpus, dictionary, num_topics):
+def get_paper_topic_probabilities_matrix(model, corpus, dictionary, docno_to_index):
+	"""Returns matrix of paper x topic where the value is the probability
+	that paper belongs to the topic.
+
+	:param model: LDA model
+	:type model: gensim.models.LdaModel
+	:param corpus: The corpus
+	:type corpus: gensim.corpora.MmCorpus
+	:param dictionary: The dictionary
+	:type dictionary: gensim.corpora.dictionary.Dictionary
+	:param docno_to_index: Dictionary from paper id to index in corpus
+	:type docno_to_index: dict
+	"""
+
+	if os.path.exists(PAPER_TOPIC_MATRIX_FILE):
+		logging.info('Using cached version of paper topic matrix. ({})'.format(PAPER_TOPIC_MATRIX_FILE))
+		matrix = np.load(PAPER_TOPIC_MATRIX_FILE).item()
+	else:
+		logging.info('Creating paper topic matrix.')
+		# Get papers from database
+		db = DataBase('../dataset/database.sqlite')
+		papers = db.get_all_papers()
+
+		matrix = np.zeros(shape=(len(papers), model.num_topics))
+
+		for _id, paper in papers.items():
+			probs = model[corpus[docno_to_index[_id]]]
+			for topic, prob in probs:
+				matrix[docno_to_index[_id]][topic] = prob
+
+		np.save(PAPER_TOPIC_MATRIX_FILE, matrix)
+
+	return matrix
+
+
+def get_lda_model(corpus, dictionary, num_topics):
+	"""Create new model or use a cached one.
+
+	:param corpus: The corpus
+	:type corpus: gensim.corpora.MmCorpus
+	:param dictionary: The dictionary
+	:type dictionary: gensim.corpora.dictionary.Dictionary
+	:param num_topics: When building the model, how many topics to use.
+	:type num_topics: int
+	:returns: The LDA model
+	:rtype: gensim.models.LdaModel
+	"""
 	if os.path.exists(LDA_MODEL_FILE):
 		logging.info(
 			'Using cached version of LDA model. ({})'.format(LDA_MODEL_FILE))
@@ -108,48 +158,63 @@ def LDA(corpus, dictionary, num_topics):
 	return model
 
 
-def DTM(corpus, dictionary):
-	db = DataBase('../dataset/database.sqlite')
-	papers = db.get_all_papers()
+# def DTM(corpus, dictionary):
+# 	db = DataBase('../dataset/database.sqlite')
+# 	papers = db.get_all_papers()
+#
+# 	# documents = []
+# 	#
+# 	# for id, paper in papers.items():
+# 	#     documents.append(paper.year)
+#
+# 	my_time_list = [1987]
+# 	for x in range(1, 30):
+# 		my_time_list.append(my_time_list[0] + x)
+# 	logging.debug(my_time_list)
+#
+# 	time_slices = []
+# 	for year in my_time_list:
+# 		papers_per_year = 0
+# 		for id, paper in papers.items():
+# 			if paper.year == year:
+# 				papers_per_year = papers_per_year + 1
+# 		time_slices.append(papers_per_year)
+# 		logging.debug(sum(time_slices))
+#
+# 		model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
+# 												time_slices, num_topics=20,
+# 												id2word=dictionary)
+# 		top_topics = model.show_topics()
+#
+# 		logging.info('Top topics:')
+# 		logging.info(top_topics)
+#
+# 		model_vis_atri = model.dtm_vis(corpus, time=29)
+#
+# 		DTM_vis = pyLDAvis.prepare(doc_lengths=model_vis_atri[2],
+# 								   doc_topic_dists=model_vis_atri[0],
+# 								   topic_term_dists=model_vis_atri[1],
+# 								   vocab=model_vis_atri[4],
+# 								   term_frequency=model_vis_atri[3])
+# 		pyLDAvis.show(DTM_vis)
 
-	# documents = []
-	#
-	# for id, paper in papers.items():
-	#     documents.append(paper.year)
 
-	my_time_list = [1987]
-	for x in range(1, 30):
-		my_time_list.append(my_time_list[0] + x)
-	logging.debug(my_time_list)
-
-	time_slices = []
-	for year in my_time_list:
-		papers_per_year = 0
-		for id, paper in papers.items():
-			if paper.year == year:
-				papers_per_year = papers_per_year + 1
-		time_slices.append(papers_per_year)
-		logging.debug(sum(time_slices))
-
-		model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
-												time_slices, num_topics=20,
-												id2word=dictionary)
-		top_topics = model.show_topics()
-
-		logging.info('Top topics:')
-		logging.info(top_topics)
-
-		model_vis_atri = model.dtm_vis(corpus, time=29)
-
-		DTM_vis = pyLDAvis.prepare(doc_lengths=model_vis_atri[2],
-								   doc_topic_dists=model_vis_atri[0],
-								   topic_term_dists=model_vis_atri[1],
-								   vocab=model_vis_atri[4],
-								   term_frequency=model_vis_atri[3])
-		pyLDAvis.show(DTM_vis)
+def get_atm_model(corpus, dictionary, docno_to_index, num_topics):
+	"""Returns matrix of paper x topic where the value is the probability
+	that paper belongs to the topic.
 
 
-def ATM(corpus, dictionary, docno_to_index, num_topics):
+	:param corpus: The corpus
+	:type corpus: gensim.corpora.MmCorpus
+	:param dictionary: The dictionary
+	:type dictionary: gensim.corpora.dictionary.Dictionary
+	:param docno_to_index: Dictionary from paper id to index in corpus
+	:type docno_to_index: dict
+	:param num_topics: When building the model, how many topics to use.
+	:type num_topics: int
+	:returns: The ATM model
+	:rtype: gensim.models.AuthorTopicModel
+	"""
 	if os.path.exists(ATM_MODEL_FILE):
 		logging.info('Using cached version of ATM model. ({})'.format(ATM_MODEL_FILE))
 		model = gensim.models.AuthorTopicModel.load(ATM_MODEL_FILE)
@@ -211,5 +276,6 @@ if __name__ == '__main__':
 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 	corpus, dictionary, docno_to_index = preprocessing.get_from_file_or_build()
 
-	model = LDA(corpus, dictionary, 20)
+	model = get_lda_model(corpus, dictionary, 20)
+	get_paper_topic_matrix(model, corpus, dictionary, docno_to_index)
 	visualize_model(model, corpus, dictionary)
