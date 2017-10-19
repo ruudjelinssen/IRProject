@@ -1,5 +1,8 @@
 import numpy as np
-from flask import request
+import pyLDAvis
+import pyLDAvis.gensim
+from flask import request, render_template
+from flask.views import View
 from flask_restful import Resource
 
 from TopicModeling import preprocessing
@@ -28,13 +31,14 @@ class BaseResource(Resource):
 	:type author_topic_probability_matrix: np.array
 	"""
 
-	def __init__(self, lda_model, corpus, dictionary, docno_to_index, author2doc, topics, paper_topic_probability_matrix, author_topic_probability_matrix):
+	def __init__(self, lda_model, corpus, dictionary, docno_to_index, author2doc, topics,
+				 paper_topic_probability_matrix, author_topic_probability_matrix):
 		self.lda_model = lda_model
 		self.corpus = corpus
 		self.dictionary = dictionary
 		self.docno_to_index = docno_to_index
 		self.author2doc = author2doc
-		self.index_to_docno = dict((y,x) for x,y in self.docno_to_index.items())
+		self.index_to_docno = dict((y, x) for x, y in self.docno_to_index.items())
 		self.paper_topic_probability_matrix = paper_topic_probability_matrix
 		self.author_topic_probability_matrix = author_topic_probability_matrix
 		self.topics = topics
@@ -119,3 +123,11 @@ class Author(BaseResource):
 		return {
 			'error': 'Invalid id {}.'.format(id)
 		}
+
+
+class Visualization(View):
+	def __init__(self, visualization, **kwargs):
+		self.visualization = visualization
+
+	def dispatch_request(self):
+		return render_template('empty.html', visualization=self.visualization)
