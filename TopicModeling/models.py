@@ -268,14 +268,3 @@ def get_atm_model(corpus, dictionary, docno_to_index, num_topics):
 		logging.info(top_topics)
 
 	return model
-
-
-if __name__ == '__main__':
-	# Test your models here
-	# Moves to the topics_entry.py when everything is finished
-	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-	corpus, dictionary, docno_to_index = preprocessing.get_from_file_or_build()
-
-	model = get_lda_model(corpus, dictionary, 20)
-	get_paper_topic_matrix(model, corpus, dictionary, docno_to_index)
-	visualize_model(model, corpus, dictionary)

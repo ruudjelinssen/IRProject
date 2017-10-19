@@ -22,7 +22,7 @@ BIGRAM_MIN_FREQ = 20
 EXTREME_NO_BELOW = 60
 EXTREME_NO_ABOVE = 0.15
 
-db = DataBase('../dataset/database.sqlite')
+db = DataBase('dataset/database.sqlite')
 
 
 def _build_corpus_and_dictionary():
