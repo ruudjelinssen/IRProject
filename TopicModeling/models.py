@@ -14,7 +14,7 @@ from TopicModeling import preprocessing
 from common.database import DataBase
 
 # Constansts
-MIN_TOPIC_PROB_THRESHOLD = 0.2
+MIN_PAPER_TOPIC_PROB_THRESHOLD = 0.2
 
 # The files
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
