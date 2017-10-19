@@ -24,6 +24,7 @@ ATM_MODEL_FILE = os.path.join(base_dir, 'atm.model')
 SERIALIZATION_FILE = os.path.join(base_dir, 'atm-ser.model')
 SPARSE_SIMILARITY_FILE = os.path.join(base_dir, 'sparse_similarity.index')
 PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic_matrix.npy')
+AUTHOR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'author_topic_matrix.npy')
 
 # The parameters for the models
 passes = 20
@@ -116,6 +117,37 @@ def get_paper_topic_probabilities_matrix(model, corpus, dictionary, docno_to_ind
 				matrix[docno_to_index[_id]][topic] = prob
 
 		np.save(PAPER_TOPIC_MATRIX_FILE, matrix)
+
+	return matrix
+
+
+def get_author_topic_probabilities_matrix(model, author2doc):
+	"""Returns matrix of authors x topic where the value is the probability
+	that author belongs to the topic.
+
+	:param model: ATM model
+	:type model: gensim.models.AuthorTopicModel
+	:param author2doc: Dict
+	:type author2doc: dict
+	"""
+
+	if os.path.exists(AUTHOR_TOPIC_MATRIX_FILE):
+		logging.info('Using cached version of author topic matrix. ({})'.format(AUTHOR_TOPIC_MATRIX_FILE))
+		matrix = np.load(AUTHOR_TOPIC_MATRIX_FILE)
+	else:
+		logging.info('Creating author topic matrix.')
+
+		# Get authors from database
+		authors = author2doc.keys()
+
+		matrix = np.zeros(shape=(len(authors), model.num_topics))
+
+		for i, author in enumerate(authors):
+			probs = model[author]
+			for topic, prob in probs:
+				matrix[i][topic] = prob
+
+		np.save(AUTHOR_TOPIC_MATRIX_FILE, matrix)
 
 	return matrix
 
@@ -221,25 +253,25 @@ def get_atm_model(corpus, dictionary, docno_to_index, num_topics):
 	:returns: The ATM model
 	:rtype: gensim.models.AuthorTopicModel
 	"""
+
+	# Get all papers
+	papers = db.get_all()
+
+	# Create doc to author dictionary
+	author2doc = {}
+	for _id, paper in papers.items():
+		for author in paper.authors:
+			name = preprocessing.preproccess_author(author.name)
+			if name not in author2doc:
+				author2doc[name] = []
+			author2doc[name].append(docno_to_index[_id])
+	logging.info('Number of different authors: {}'.format(len(author2doc)))
+
 	if os.path.exists(ATM_MODEL_FILE):
 		logging.info('Using cached version of ATM model. ({})'.format(ATM_MODEL_FILE))
 		model = gensim.models.AuthorTopicModel.load(ATM_MODEL_FILE)
 	else:
 		logging.info('Building ATM model.')
-
-		# Get all papers
-		papers = db.get_all()
-
-		# Create doc to author dictionary
-		author2doc = {}
-		for _id, paper in papers.items():
-			for author in paper.authors:
-				# TODO: author names not always correct
-				name = re.sub('\s', '', author.name)
-				if name not in author2doc:
-					author2doc[name] = []
-				author2doc[name].append(docno_to_index[_id])
-		logging.info('Number of different authors: {}'.format(len(author2doc)))
 
 		# Create the model
 		model = gensim.models.AuthorTopicModel(
@@ -258,18 +290,4 @@ def get_atm_model(corpus, dictionary, docno_to_index, num_topics):
 		# Save the model to a file
 		model.save(ATM_MODEL_FILE)
 
-		# Get the top models
-		top_topics = model.top_topics(corpus[:200])
-
-		# Calculate the average coherence
-		avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topics
-		log_perplexity = model.log_perplexity(corpus[:200])
-		bound = model.bound(corpus[:200])
-
-		logging.info('Average topic coherence: {}'.format(avg_topic_coherence))
-		logging.info('Log perplexity: {}'.format(log_perplexity))
-		logging.info('Bound: {}'.format(bound))
-		logging.info('Top topics:')
-		logging.info(top_topics)
-
-	return model
+	return model, author2doc

@@ -49,6 +49,9 @@ class TopicsServer:
     dictionary = None
     docno_to_index = None
     lda_model = None
+    atm_model = None
+    author_topic_probability_matrix = None
+    author2doc = None
     paper_topic_probability_matrix = None
 
     def __init__(self):
@@ -61,11 +64,16 @@ class TopicsServer:
         """Load all matrices and models in memory."""
         self.corpus, self.dictionary, self.docno_to_index = preprocessing.get_from_file_or_build()
         self.lda_model = models.get_lda_model(self.corpus, self.dictionary, NUM_TOPICS)
+        self.atm_model, self.author2doc = models.get_atm_model(self.corpus, self.dictionary, self.docno_to_index, NUM_TOPICS)
         self.paper_topic_probability_matrix = models.get_paper_topic_probabilities_matrix(
             self.lda_model,
             self.corpus,
             self.dictionary,
             self.docno_to_index
+        )
+        self.author_topic_probability_matrix = models.get_author_topic_probabilities_matrix(
+            self.atm_model,
+            self.author2doc
         )
 
     def init_flask_server(self, debug_mode_enabled):
@@ -86,6 +94,7 @@ class TopicsServer:
         self._add_resource(Paper, '/paper/<int:id>/')
         self._add_resource(SearchTopic, '/topic')
         self._add_resource(Topic, '/topic/<int:id>/')
+        self._add_resource(Author, '/author/<int:id>/')
 
     def _add_resource(self, resource, url):
         args = (
@@ -93,8 +102,10 @@ class TopicsServer:
             self.corpus,
             self.dictionary,
             self.docno_to_index,
+            self.author2doc,
             TOPICS,
-            self.paper_topic_probability_matrix
+            self.paper_topic_probability_matrix,
+            self.author_topic_probability_matrix
         )
 
         self.api.add_resource(resource, url, resource_class_args=args)

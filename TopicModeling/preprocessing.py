@@ -4,7 +4,7 @@ import re
 
 import nltk
 import numpy as np
-from gensim import corpora,utils
+from gensim import corpora, utils
 from gensim.models.phrases import Phrases
 from gensim.parsing import strip_punctuation, strip_multiple_whitespaces, strip_short, remove_stopwords, strip_numeric
 from nltk import RegexpTokenizer
@@ -46,7 +46,8 @@ def _build_corpus_and_dictionary():
 		docno_to_index[_id] = i
 		i += 1
 		s = utils.to_unicode(paper.paper_text)
-		for f in [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces, strip_numeric, remove_stopwords, strip_short]:
+		for f in [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces, strip_numeric, remove_stopwords,
+				  strip_short]:
 			s = f(s)
 		documents.append(s)
 
@@ -128,3 +129,7 @@ def get_from_file_or_build():
 	logging.info('Number of documents: {}'.format(len(corpus)))
 
 	return corpus, dictionary, docno_to_index
+
+
+def preproccess_author(name):
+	return re.sub('\s', '', name)

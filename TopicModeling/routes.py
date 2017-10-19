@@ -2,6 +2,7 @@ import numpy as np
 from flask import request
 from flask_restful import Resource
 
+from TopicModeling import preprocessing
 from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
 from common.database import DataBase
 
@@ -23,15 +24,19 @@ class BaseResource(Resource):
 	:type docno_to_index: dict
 	:param paper_topic_probability_matrix: A matrix of papers x topics -> probability
 	:type paper_topic_probability_matrix: np.array
+	:param author_topic_probability_matrix: A matrix of author x topics -> probability
+	:type author_topic_probability_matrix: np.array
 	"""
 
-	def __init__(self, lda_model, corpus, dictionary, docno_to_index, topics, paper_topic_probability_matrix):
+	def __init__(self, lda_model, corpus, dictionary, docno_to_index, author2doc, topics, paper_topic_probability_matrix, author_topic_probability_matrix):
 		self.lda_model = lda_model
 		self.corpus = corpus
 		self.dictionary = dictionary
 		self.docno_to_index = docno_to_index
+		self.author2doc = author2doc
 		self.index_to_docno = dict((y,x) for x,y in self.docno_to_index.items())
 		self.paper_topic_probability_matrix = paper_topic_probability_matrix
+		self.author_topic_probability_matrix = author_topic_probability_matrix
 		self.topics = topics
 
 
@@ -43,13 +48,15 @@ class Paper(BaseResource):
 		if id in self.docno_to_index:
 			topics = self.paper_topic_probability_matrix[self.docno_to_index[id]]
 			topics = np.sort(topics)[::-1]
-			return {'topics': [
-				{
+			return {
+				'id': id,
+				'title': db.get_all_papers()[id].title,
+				'topics': [{
 					'id': id,
 					'name': self.topics[id],
 					'probability': prob
-				} for id, prob in enumerate(topics) if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD
-			]}
+				} for id, prob in enumerate(topics) if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD]
+			}
 		return {
 			'error': 'Invalid id {}.'.format(id)
 		}
@@ -78,10 +85,37 @@ class Topic(BaseResource):
 			key=lambda x: x[1],
 			reverse=True) if p > MIN_PAPER_TOPIC_PROB_THRESHOLD]
 
+		# TODO add more info
+
 		return {
 			'papers': [{
 				'id': self.index_to_docno[id],
 				'title': papers[self.index_to_docno[id]].title,
 				'probability': prob
 			} for id, prob in relevant_papers]
+		}
+
+
+class Author(BaseResource):
+	def get(self, id):
+		authors = db.get_all_authors()
+
+		if id in authors:
+			name = authors[id].name
+			names = list(self.author2doc.keys())
+			topics = self.author_topic_probability_matrix[
+				names.index(preprocessing.preproccess_author(name))
+			]
+			topics = np.sort(topics)[::-1]
+			return {
+				'id': id,
+				'name': authors[id].name,
+				'topics': [{
+					'id': id,
+					'name': self.topics[id],
+					'probability': prob
+				} for id, prob in enumerate(topics) if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD]
+			}
+		return {
+			'error': 'Invalid id {}.'.format(id)
 		}
