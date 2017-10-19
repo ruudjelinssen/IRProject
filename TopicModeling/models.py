@@ -20,12 +20,14 @@ DTM_MODEL_FILE = os.path.join(base_dir, 'dtm.model')
 ATM_MODEL_FILE = os.path.join(base_dir, 'atm.model')
 SERIALIZATION_FILE = os.path.join(base_dir, 'atm-ser.model')
 SPARSE_SIMILARITY_FILE = os.path.join(base_dir, 'sparse_similarity.index')
-PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic.matrix')
+PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic_matrix')
 
 # The parameters for the models
 passes = 20
 eval_every = 0
 iterations = 100
+
+db = DataBase('dataset/database.sqlite')
 
 
 def get_lda_coherence_scores(corpus, dictionary, _range=range(5, 100, 5)):
@@ -93,13 +95,13 @@ def get_paper_topic_probabilities_matrix(model, corpus, dictionary, docno_to_ind
 	:type docno_to_index: dict
 	"""
 
-	if os.path.exists(PAPER_TOPIC_MATRIX_FILE):
-		logging.info('Using cached version of paper topic matrix. ({})'.format(PAPER_TOPIC_MATRIX_FILE))
+	if os.path.exists('{}.npy'.format(PAPER_TOPIC_MATRIX_FILE)):
+		logging.info('Using cached version of paper topic matrix. ({}.npy)'.format(PAPER_TOPIC_MATRIX_FILE))
 		matrix = np.load(PAPER_TOPIC_MATRIX_FILE).item()
 	else:
 		logging.info('Creating paper topic matrix.')
+
 		# Get papers from database
-		db = DataBase('../dataset/database.sqlite')
 		papers = db.get_all_papers()
 
 		matrix = np.zeros(shape=(len(papers), model.num_topics))
@@ -222,7 +224,6 @@ def get_atm_model(corpus, dictionary, docno_to_index, num_topics):
 		logging.info('Building ATM model.')
 
 		# Get all papers
-		db = DataBase('../dataset/database.sqlite')
 		papers = db.get_all()
 
 		# Create doc to author dictionary

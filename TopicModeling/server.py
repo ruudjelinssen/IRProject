@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import datetime
 
+import logging
 from flask import Flask
 from flask_restful import Api, Resource
 
@@ -26,6 +27,7 @@ class TopicsServer:
     dictionary = None
     docno_to_index = None
     lda_model = None
+    paper_topic_probability_matrix = None
 
     def __init__(self):
         self.app = Flask(__name__)
@@ -37,6 +39,12 @@ class TopicsServer:
         """Load all matrices and models in memory."""
         self.corpus, self.dictionary, self.docno_to_index = preprocessing.get_from_file_or_build()
         self.lda_model = models.get_lda_model(self.corpus, self.dictionary, NUM_TOPICS)
+        self.paper_topic_probability_matrix = models.get_paper_topic_probabilities_matrix(
+            self.lda_model,
+            self.corpus,
+            self.dictionary,
+            self.docno_to_index
+        )
 
     def init_flask_server(self, debug_mode_enabled):
         """
@@ -46,7 +54,7 @@ class TopicsServer:
         """
 
         self.app.run(port=FLASK_PORT, debug=debug_mode_enabled)
-        print('Server Running on port {}'.format(FLASK_PORT))
+        logging.info('Server Running on port {}'.format(FLASK_PORT))
 
     def add_routes(self):
         """
@@ -54,6 +62,6 @@ class TopicsServer:
         :return:
         """
 
-        args = (self.lda_model, self.corpus, self.dictionary, self.docno_to_index,)
+        args = (self.lda_model, self.corpus, self.dictionary, self.docno_to_index, self.paper_topic_probability_matrix)
 
         self.api.add_resource(Paper, '/paper/<int:id>/', resource_class_args=args)
