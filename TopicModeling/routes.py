@@ -1,7 +1,7 @@
 from datetime import datetime
-
+import numpy as np
 from flask_restful import Resource
-
+from TopicModeling.models import MIN_TOPIC_PROB_THRESHOLD
 
 class BaseResource(Resource):
 	def __init__(self, lda_model, corpus, dictionary, docno_to_index, paper_topic_probability_matrix):
@@ -19,11 +19,13 @@ class Paper(BaseResource):
 
 		# Get topics it belongs to
 		topics = self.paper_topic_probability_matrix[self.docno_to_index[id]]
+		topics = np.sort(topics)[::-1]
 
 		# TODO name should give topic name, not ID
 		return {'topics': [
 			{
 				'id': id,
-				'name': id
-			} for id, prob in topics if prob > 0.3
+				'name': id,
+				'probability': prob
+			} for id, prob in enumerate(topics) if prob > MIN_TOPIC_PROB_THRESHOLD
 		]}

@@ -61,7 +61,11 @@ class TopicsServer:
         Add our api resource routes
         :return:
         """
+        self._add_resource(Paper, '/paper/<int:id>/')
+
+    def _add_resource(self, resource, url):
 
         args = (self.lda_model, self.corpus, self.dictionary, self.docno_to_index, self.paper_topic_probability_matrix)
 
-        self.api.add_resource(Paper, '/paper/<int:id>/', resource_class_args=args)
+        self.api.add_resource(resource, url, resource_class_args=args)
+

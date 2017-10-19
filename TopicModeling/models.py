@@ -13,6 +13,9 @@ from gensim.models import CoherenceModel, LdaModel
 from TopicModeling import preprocessing
 from common.database import DataBase
 
+# Constansts
+MIN_TOPIC_PROB_THRESHOLD = 0.2
+
 # The files
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
 LDA_MODEL_FILE = os.path.join(base_dir, 'lda.model')
@@ -20,13 +23,14 @@ DTM_MODEL_FILE = os.path.join(base_dir, 'dtm.model')
 ATM_MODEL_FILE = os.path.join(base_dir, 'atm.model')
 SERIALIZATION_FILE = os.path.join(base_dir, 'atm-ser.model')
 SPARSE_SIMILARITY_FILE = os.path.join(base_dir, 'sparse_similarity.index')
-PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic_matrix')
+PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic_matrix.npy')
 
 # The parameters for the models
 passes = 20
 eval_every = 0
 iterations = 100
 
+# Database
 db = DataBase('dataset/database.sqlite')
 
 
@@ -95,9 +99,9 @@ def get_paper_topic_probabilities_matrix(model, corpus, dictionary, docno_to_ind
 	:type docno_to_index: dict
 	"""
 
-	if os.path.exists('{}.npy'.format(PAPER_TOPIC_MATRIX_FILE)):
-		logging.info('Using cached version of paper topic matrix. ({}.npy)'.format(PAPER_TOPIC_MATRIX_FILE))
-		matrix = np.load(PAPER_TOPIC_MATRIX_FILE).item()
+	if os.path.exists(PAPER_TOPIC_MATRIX_FILE):
+		logging.info('Using cached version of paper topic matrix. ({})'.format(PAPER_TOPIC_MATRIX_FILE))
+		matrix = np.load(PAPER_TOPIC_MATRIX_FILE)
 	else:
 		logging.info('Creating paper topic matrix.')
 
