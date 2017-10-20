@@ -9,4 +9,4 @@ if __name__ == '__main__':
 
     # Start the server
     t = TopicsServer()
-    t.init_flask_server(os.environ.get('DEBUG', False))
+    t.init_flask_server(os.environ.get('DEBUG', True))

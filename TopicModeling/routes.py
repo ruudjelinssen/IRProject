@@ -1,17 +1,22 @@
+from collections import defaultdict
+
 import numpy as np
 import math
 import pyLDAvis
 import pyLDAvis.gensim
+from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure, show
+from bokeh.embed import file_html, components
 from flask import request, render_template
 from flask.views import View
 from flask_restful import Resource
 
 from TopicModeling import preprocessing
 from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
+from TopicModeling.config import TOPICS
 from common.database import DataBase
 
 # Database
-
 db = DataBase('dataset/database.sqlite')
 
 
@@ -95,7 +100,6 @@ class Topic(BaseResource):
 			key=lambda x: x[1],
 			reverse=True) if p > MIN_PAPER_TOPIC_PROB_THRESHOLD]
 
-		authors = db.get_all_authors()
 		author_scores = []
 		relevant_authors = []
 
@@ -157,8 +161,47 @@ class Author(BaseResource):
 
 
 class Visualization(View):
-	def __init__(self, visualization, **kwargs):
+	def __init__(self, visualization):
 		self.visualization = visualization
 
 	def dispatch_request(self):
 		return render_template('empty.html', visualization=self.visualization)
+
+
+class TopicEvolution(View):
+	def __init__(self, year_topic_matrix):
+		self.year_topic_matrix = year_topic_matrix
+
+	def dispatch_request(self, id):
+		data = self.year_topic_matrix[:, id]
+
+		db = DataBase('dataset/database.sqlite')
+
+		# Docs per year
+		docs_per_year = {}
+		for _id, paper in db.get_all_papers().items():
+			if paper.year not in docs_per_year:
+				docs_per_year[paper.year] = 0
+			docs_per_year[paper.year] += 1
+
+		# prepare some data
+		x = [1987 + i for i in range(len(data))]
+		y0 = data
+		y1 = [y / docs_per_year[x + 1987] for x, y in enumerate(data)]
+
+		# create a new plot
+		p = figure(tools="", title="Evolution of \'{}\'".format(TOPICS[id]), x_axis_label='years',
+				   y_axis_label='topic distribution'
+	   	)
+
+		p.extra_y_ranges = {'average':  Range1d(start=0, end=max(y1) * 1.05)}
+		p.add_layout(LinearAxis(y_range_name='average'), 'right')
+
+		# add some renderers
+		p.vbar(x, top=y0, width=0.7, legend="Total")
+		p.line(x, y=y1, line_width=2, legend="Average per paper", color="orange", y_range_name='average')
+
+		# show the results
+		script, div = components(p)
+
+		return render_template('empty.html', visualization=div, script=script)

@@ -10,3 +10,4 @@ flask-restful
 
 # Visualization
 pyLDAvis
+bokeh
