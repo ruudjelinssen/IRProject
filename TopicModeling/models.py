@@ -25,11 +25,13 @@ SERIALIZATION_FILE = os.path.join(base_dir, 'atm-ser.model')
 SPARSE_SIMILARITY_FILE = os.path.join(base_dir, 'sparse_similarity.index')
 PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic_matrix.npy')
 AUTHOR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'author_topic_matrix.npy')
+YEAR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'year_topic_matrix.npy')
+YEAR_AUTHOR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'year_author_topic_matrix.npy')
 
 # The parameters for the models
 passes = 20
 eval_every = 0
-iterations = 100
+iterations = 200
 
 # Database
 db = DataBase('dataset/database.sqlite')
@@ -47,7 +49,7 @@ def get_lda_coherence_scores(corpus, dictionary, _range=range(5, 100, 5)):
 
 		# Create the model
 		model = LdaModel(corpus=corpus, id2word=dictionary, alpha='auto',
-						 eta='auto', num_topics=i, passes=passes,
+						 eta='auto', num_topics=i, passes=10,
 						 eval_every=eval_every)
 
 		# Save the model to a file
@@ -114,9 +116,73 @@ def get_paper_topic_probabilities_matrix(model, corpus, dictionary, docno_to_ind
 		for _id, paper in papers.items():
 			probs = model[corpus[docno_to_index[_id]]]
 			for topic, prob in probs:
-				matrix[docno_to_index[_id]][topic] = prob
+				matrix[docno_to_index[_id], topic] = prob
 
 		np.save(PAPER_TOPIC_MATRIX_FILE, matrix)
+
+	return matrix
+
+
+def get_year_topic_matrix(paper_topic_matrix, docno_to_index):
+	"""
+	Returns 2 dimensional array of year x topic where each value is a score
+	"""
+
+	if os.path.exists(YEAR_TOPIC_MATRIX_FILE):
+		logging.info('Using cached version of year topic matrix. ({})'.format(YEAR_TOPIC_MATRIX_FILE))
+		matrix = np.load(YEAR_TOPIC_MATRIX_FILE)
+	else:
+		logging.info('Creating year topic matrix.')
+		papers = db.get_all_papers()
+
+		years_to_docs = {}
+		for _id, paper in papers.items():
+			if paper.year not in years_to_docs:
+				years_to_docs[paper.year] = []
+			years_to_docs[paper.year].append(_id)
+
+		matrix = np.zeros(shape=(len(list(years_to_docs.keys())), paper_topic_matrix.shape[1]))
+
+		for year, docs in years_to_docs.items():
+			for d in docs:
+				for topic, prob in enumerate(paper_topic_matrix[docno_to_index[d]]):
+					matrix[year - 1987, topic] += prob
+
+		np.save(YEAR_TOPIC_MATRIX_FILE, matrix)
+
+	return matrix
+
+
+def get_year_author_topic_matrix(paper_topic_matrix, docno_to_index, author2doc):
+	"""
+	Returns 3 dimensional array of year x author x topic where each value is a score
+	"""
+
+	if os.path.exists(YEAR_AUTHOR_TOPIC_MATRIX_FILE):
+		logging.info('Using cached version of year x author x topic matrix. ({})'.format(YEAR_AUTHOR_TOPIC_MATRIX_FILE))
+		matrix = np.load(YEAR_AUTHOR_TOPIC_MATRIX_FILE)
+	else:
+		logging.info('Creating year x author x topic matrix.')
+		papers = db.get_all_papers()
+
+		years_to_docs = {}
+		for _id, paper in papers.items():
+			if paper.year not in years_to_docs:
+				years_to_docs[paper.year] = []
+			years_to_docs[paper.year].append(_id)
+
+		matrix = np.zeros(shape=(len(list(years_to_docs.keys())), len(list(author2doc.keys())), paper_topic_matrix.shape[1]))
+
+		for year, y_docs in years_to_docs.items():
+			y_docs = [docno_to_index[d] for d in y_docs]
+			for author, a_docs in author2doc.items():
+				author_index = list(author2doc.keys()).index(author)
+				docs_this_year_this_author = list(set(y_docs) & set(a_docs))
+
+				for d in docs_this_year_this_author:
+					matrix[year - 1987, author_index] += paper_topic_matrix[d]
+
+		np.save(YEAR_AUTHOR_TOPIC_MATRIX_FILE, matrix)
 
 	return matrix
 
@@ -194,47 +260,6 @@ def get_lda_model(corpus, dictionary, num_topics):
 		logging.info(top_topics)
 
 	return model
-
-
-# def DTM(corpus, dictionary):
-# 	db = DataBase('../dataset/database.sqlite')
-# 	papers = db.get_all_papers()
-#
-# 	# documents = []
-# 	#
-# 	# for id, paper in papers.items():
-# 	#     documents.append(paper.year)
-#
-# 	my_time_list = [1987]
-# 	for x in range(1, 30):
-# 		my_time_list.append(my_time_list[0] + x)
-# 	logging.debug(my_time_list)
-#
-# 	time_slices = []
-# 	for year in my_time_list:
-# 		papers_per_year = 0
-# 		for id, paper in papers.items():
-# 			if paper.year == year:
-# 				papers_per_year = papers_per_year + 1
-# 		time_slices.append(papers_per_year)
-# 		logging.debug(sum(time_slices))
-#
-# 		model = gensim.models.wrappers.DtmModel('dtm-win64.exe', corpus,
-# 												time_slices, num_topics=20,
-# 												id2word=dictionary)
-# 		top_topics = model.show_topics()
-#
-# 		logging.info('Top topics:')
-# 		logging.info(top_topics)
-#
-# 		model_vis_atri = model.dtm_vis(corpus, time=29)
-#
-# 		DTM_vis = pyLDAvis.prepare(doc_lengths=model_vis_atri[2],
-# 								   doc_topic_dists=model_vis_atri[0],
-# 								   topic_term_dists=model_vis_atri[1],
-# 								   vocab=model_vis_atri[4],
-# 								   term_frequency=model_vis_atri[3])
-# 		pyLDAvis.show(DTM_vis)
 
 
 def get_atm_model(corpus, dictionary, docno_to_index, num_topics):

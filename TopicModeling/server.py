@@ -16,8 +16,11 @@ FLASK_PORT = 5003
 app = Flask(__name__, template_folder=os.path.join('TopicModeling', 'templates'))
 api = Api(app)
 
+# Database
+db = DataBase('dataset/database.sqlite')
+
 # Number of topics
-NUM_TOPICS = 20
+NUM_TOPICS = 35
 TOPICS = [
 	'Topic 0',
 	'Topic 1',
@@ -54,8 +57,12 @@ class TopicsServer:
 	atm_model = None
 	author_topic_probability_matrix = None
 	author2doc = None
+	author_short_names = None
+	author_short_index_to_author = None
 	paper_topic_probability_matrix = None
 	lda_visualization_html = None
+	year_topic_matrix = None
+	year_author_topic_matrix = None
 
 	def __init__(self):
 		self.app = Flask(__name__)
@@ -69,6 +76,12 @@ class TopicsServer:
 		self.corpus, self.dictionary, self.docno_to_index = preprocessing.get_from_file_or_build()
 		self.lda_model = models.get_lda_model(self.corpus, self.dictionary, NUM_TOPICS)
 		self.atm_model, self.author2doc = models.get_atm_model(self.corpus, self.dictionary, self.docno_to_index, NUM_TOPICS)
+		self.author_short_names = list(self.author2doc.keys())
+		self.author_short_index_to_author = {}
+		for _id, author in db.get_all_authors().items():
+			short = preprocessing.preproccess_author(author.name)
+			if short in self.author_short_names:
+				self.author_short_index_to_author[self.author_short_names.index(short)] = (_id, author)
 		self.paper_topic_probability_matrix = models.get_paper_topic_probabilities_matrix(
 			self.lda_model,
 			self.corpus,
@@ -79,6 +92,8 @@ class TopicsServer:
 			self.atm_model,
 			self.author2doc
 		)
+		self.year_topic_matrix = models.get_year_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index)
+		self.year_author_topic_matrix = models.get_year_author_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index, self.author2doc)
 
 	def prepare_visualizations(self):
 		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary)
@@ -112,6 +127,8 @@ class TopicsServer:
 			self.dictionary,
 			self.docno_to_index,
 			self.author2doc,
+			self.author_short_names,
+			self.author_short_index_to_author,
 			TOPICS,
 			self.paper_topic_probability_matrix,
 			self.author_topic_probability_matrix

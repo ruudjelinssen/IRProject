@@ -20,7 +20,7 @@ docno_to_index_file = os.path.join(base_dir, 'docno_to_index.npy')
 # Settings for the preproccessor
 BIGRAM_MIN_FREQ = 20
 EXTREME_NO_BELOW = 60
-EXTREME_NO_ABOVE = 0.15
+EXTREME_NO_ABOVE = 0.3
 
 db = DataBase('dataset/database.sqlite')
 
@@ -120,7 +120,7 @@ def get_from_file_or_build():
 	docno_to_index = np.load(docno_to_index_file).item()
 
 	papers = db.get_all_papers()
-	if len(papers) != len(corpus):
+	if len(papers) != len(corpus) or len(corpus) != len(docno_to_index):
 		raise Exception(
 			'Amount of papers in database is not equal to corpus length. database: {}, corpus: {}'.format(
 				len(papers), len(corpus)))

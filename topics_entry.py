@@ -1,5 +1,6 @@
 import logging
 import os
+
 from TopicModeling.server import TopicsServer
 
 if __name__ == '__main__':
