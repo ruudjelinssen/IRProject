@@ -246,12 +246,12 @@ def get_lda_model(corpus, dictionary, num_topics):
 		model.save(LDA_MODEL_FILE)
 
 		# Get the top models
-		top_topics = model.top_topics(corpus[:200])
+		top_topics = model.top_topics(corpus)
 
 		# Calculate the average coherence
 		avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topics
-		log_perplexity = model.log_perplexity(corpus[:200])
-		bound = model.bound(corpus[:200])
+		log_perplexity = model.log_perplexity(corpus)
+		bound = model.bound(corpus)
 
 		logging.info('Average topic coherence: {}'.format(avg_topic_coherence))
 		logging.info('Log perplexity: {}'.format(log_perplexity))
