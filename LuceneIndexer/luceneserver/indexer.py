@@ -17,7 +17,7 @@ from ..helpers import constants
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField, FieldType
+from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField, FieldType, SortedNumericDocValuesField
 from org.apache.lucene.index import IndexWriter, IndexWriterConfig, Term, IndexOptions
 from org.apache.lucene.store import SimpleFSDirectory
 
@@ -103,8 +103,8 @@ class Indexer(object):
         # We add the year as both an int point for easy searching
         # and as a stored field for display purposes
 
-        document.add(IntPoint("year", paper.year))
-        document.add(StoredField("year", paper.year))
+        document.add(SortedNumericDocValuesField("year", paper.year))
+        document.add(StoredField("year_store", paper.year))
 
         for author in paper.authors:
 

@@ -17,7 +17,7 @@ import lucene
 from java.nio.file import Paths
 from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher
+from org.apache.lucene.search import IndexSearcher, Sort, SortField, SortedNumericSortField
 from org.apache.lucene.search.highlight import SimpleHTMLFormatter, Highlighter, QueryScorer, TokenSources, SimpleFragmenter
 
 
@@ -73,7 +73,17 @@ class Search:
         query = qb.build_query()
         print(query)
 
-        hits = self.searcher.search(query, 10)
+        if 'order' in self.query_params:
+
+            if self.query_params['order'] == 'year':
+                sort = Sort(SortedNumericSortField('year', SortField.Type.INT, True))
+                hits = self.searcher.search(query, 10, sort)
+
+            else:
+                hits = self.searcher.search(query, 10)
+        else:
+            hits = self.searcher.search(query, 10)
+
         score_docs = hits.scoreDocs
         print("%s total matching documents." % len(score_docs))
 
@@ -99,16 +109,20 @@ class Search:
             for author in doc.getFields('author'):
                 authors.append(author.stringValue())
 
-            retrieved_files.append({
+            doc_result = {
                 'title': doc.get('paper_title'),
-                'year': doc.get('year'),
+                'year': doc.get('year_store'),
                 'authors': authors,
                 'event_type': doc.get('event_type'),
                 'pdf_name': doc.get('pdf_name'),
                 'abstract': doc.get('abstract'),
                 'highlight': fragment,
-                'score': score_doc.score
-            })
+            }
+
+            if type(score_doc.score) == 'float':
+                    doc_result['score'] = score_doc.score
+
+            retrieved_files.append(doc_result)
 
         result['meta'] = {
             'total': hits.totalHits
