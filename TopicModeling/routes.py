@@ -16,9 +16,6 @@ from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
 from TopicModeling.config import TOPICS
 from common.database import DataBase
 
-# Database
-db = DataBase('dataset/database.sqlite')
-
 
 class BaseResource(Resource):
 	"""Extend from this to give you access to these models and matrices.
@@ -56,6 +53,8 @@ class Paper(BaseResource):
 	"""Returns topic information about a paper."""
 
 	def get(self, id):
+		# Database
+		db = DataBase('dataset/database.sqlite')
 		# Get topics it belongs to
 		if id in self.docno_to_index:
 			topics = self.paper_topic_probability_matrix[self.docno_to_index[id]]
@@ -90,6 +89,8 @@ class SearchTopic(BaseResource):
 
 class Topic(BaseResource):
 	def get(self, id):
+		# Database
+		db = DataBase('dataset/database.sqlite')
 		papers = db.get_all_papers()
 
 		if id >= len(self.topics):
@@ -119,7 +120,18 @@ class Topic(BaseResource):
 			a_id, author = self.author_short_index_to_author[i]
 			relevant_authors.append((a_id, author, score, prob, amount))
 
+		top_words = []
+
+		get_terms = self.lda_model.get_topic_terms(id, topn=10)
+		for word_id,word_prob in  get_terms:
+			word = self.dictionary[word_id]
+			top_words.append([word,word_prob])
+
 		return {
+			'Top Words': [{
+				'word': word,
+				'prob': word_prob,
+			} for word, word_prob in top_words],
 			'papers': [{
 				'id': self.index_to_docno[_id],
 				'title': papers[self.index_to_docno[_id]].title,
@@ -137,6 +149,8 @@ class Topic(BaseResource):
 
 class Author(BaseResource):
 	def get(self, id):
+		# Database
+		db = DataBase('dataset/database.sqlite')
 		authors = db.get_all_authors()
 
 		if id in authors:
