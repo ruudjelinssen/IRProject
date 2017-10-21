@@ -76,8 +76,12 @@ class Search:
         if 'order' in self.query_params:
 
             if self.query_params['order'] == 'year':
-                sort = Sort(SortedNumericSortField('year', SortField.Type.INT, True))
-                hits = self.searcher.search(query, 10, sort)
+                sorter = Sort(SortedNumericSortField('year', SortField.Type.INT, True))
+                hits = self.searcher.search(query, 10, sorter)
+
+            elif self.query_params['order'] == 'alphabetical':
+                sorter = Sort(SortField("paper_title_sort", SortField.Type.STRING, False))
+                hits = self.searcher.search(query, 10, sorter)
 
             else:
                 hits = self.searcher.search(query, 10)
