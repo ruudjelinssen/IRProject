@@ -129,7 +129,7 @@ class Topic(BaseResource):
 			top_words.append([word,word_prob])
 
 		return {
-			'Top Words': [{
+			'words': [{
 				'word': word,
 				'prob': word_prob,
 			} for word, word_prob in top_words],
