@@ -66,6 +66,7 @@ class Search:
         :return:
         """
 
+        result = {}
         retrieved_files = []
 
         qb = QueryBuilder(self.query_params)
@@ -105,7 +106,13 @@ class Search:
                 'event_type': doc.get('event_type'),
                 'pdf_name': doc.get('pdf_name'),
                 'abstract': doc.get('abstract'),
-                'highlight': fragment
+                'highlight': fragment,
+                'score': score_doc.score
             })
 
-        return retrieved_files
+        result['meta'] = {
+            'total': hits.totalHits
+        }
+        result['results'] = retrieved_files
+
+        return result
