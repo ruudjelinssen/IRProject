@@ -20,7 +20,7 @@ import lucene
 
 from org.apache.lucene.document import IntPoint
 from org.apache.lucene.index import Term
-from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery
+from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery, BoostQuery
 from org.apache.lucene.search.spans import SpanMultiTermQueryWrapper, SpanNearQuery
 
 
@@ -97,12 +97,12 @@ class QueryBuilder(object):
 
         if self.constructs[1] in splits:
 
-            self.__construct_field('paper_title', splits[self.constructs[1]], False, False)
-            self.__construct_field('paper_title', splits[self.constructs[1]], True, False)
-            self.__construct_field('abstract', splits[self.constructs[1]], False, False)
-            self.__construct_field('abstract', splits[self.constructs[1]], True, False)
-            self.__construct_field('paper_text', splits[self.constructs[1]], False, False)
-            self.__construct_field('paper_text', splits[self.constructs[1]], True, False)
+            self.__construct_field('paper_title', splits[self.constructs[1]], False, False, boost=3.0)
+            self.__construct_field('paper_title', splits[self.constructs[1]], True, False, boost=4.0)
+            self.__construct_field('abstract', splits[self.constructs[1]], False, False, boost=1.2)
+            self.__construct_field('abstract', splits[self.constructs[1]], True, False, boost=1.4)
+            self.__construct_field('paper_text', splits[self.constructs[1]], False, False, boost=1.0)
+            self.__construct_field('paper_text', splits[self.constructs[1]], True, False, boost=1.0)
             has_constructs = True
 
         if self.constructs[2] in splits:
@@ -174,7 +174,7 @@ class QueryBuilder(object):
 
         return or_query_builder.build()
 
-    def __construct_field_from_url_params(self, field_name, is_phrase=False, must_occur=True):
+    def __construct_field_from_url_params(self, field_name, is_phrase=False, must_occur=True, boost=1.0):
         """
         Wrapper to be able to construct a field using the url parameters we know of
 
@@ -192,9 +192,9 @@ class QueryBuilder(object):
         if not text or not text.strip():
             return
 
-        self.__construct_field(field_name, text, is_phrase, must_occur)
+        self.__construct_field(field_name, text, is_phrase, must_occur, boost)
 
-    def __construct_field(self, field_name, text, is_phrase=False, must_occur=True):
+    def __construct_field(self, field_name, text, is_phrase=False, must_occur=True, boost=1.0):
         """
         Generic wrapper to be able to construct the query for a particular field
 
@@ -215,6 +215,10 @@ class QueryBuilder(object):
         if len(text.split(' ')) == 1:
 
             fuzzy_query = FuzzyQuery(Term(field_name, text), 2)
+
+            if boost != 1.0:
+                fuzzy_query = BoostQuery(fuzzy_query, boost)
+
             self.boolean_query_builder.add(fuzzy_query, occurrence)
             return
 
@@ -230,6 +234,10 @@ class QueryBuilder(object):
                 # Now we have either author names, or author names separated with ors
 
                 or_query = QueryBuilder.construct_or_query(field_name, and_part, is_phrase)
+
+                if boost != 1.0:
+                    or_query = BoostQuery(or_query, boost)
+
                 self.boolean_query_builder.add(or_query, occurrence)
             return
 
@@ -241,6 +249,10 @@ class QueryBuilder(object):
         if len(or_split) > 1:
 
             or_query = QueryBuilder.construct_or_query(field_name, text, is_phrase)
+
+            if boost != 1.0:
+                or_query = BoostQuery(or_query, boost)
+
             self.boolean_query_builder.add(or_query, occurrence)
             return
 
@@ -250,6 +262,10 @@ class QueryBuilder(object):
                 span_query = QueryBuilder.construct_multi_term_span_query(field_name, text)
             else:
                 span_query = QueryBuilder.construct_multi_term_query(field_name, text)
+
+            if boost != 1.0:
+                span_query = BoostQuery(span_query, boost)
+
             self.boolean_query_builder.add(span_query, occurrence)
             return
 
