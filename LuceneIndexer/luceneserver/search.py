@@ -73,14 +73,20 @@ class Search:
         query = qb.build_query()
         print(query)
 
+        descending = False
+
+        if 'direction' in self.query_params:
+            if self.query_params['direction'] == 'descending':
+                descending = True
+
         if 'order' in self.query_params:
 
             if self.query_params['order'] == 'year':
-                sorter = Sort(SortedNumericSortField('year', SortField.Type.INT, True))
+                sorter = Sort(SortedNumericSortField('year', SortField.Type.INT, descending))
                 hits = self.searcher.search(query, 10, sorter)
 
             elif self.query_params['order'] == 'alphabetical':
-                sorter = Sort(SortField("paper_title_sort", SortField.Type.STRING, False))
+                sorter = Sort(SortField("paper_title_sort", SortField.Type.STRING, descending))
                 hits = self.searcher.search(query, 10, sorter)
 
             else:
