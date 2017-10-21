@@ -215,8 +215,6 @@ def get_author_topic_probabilities_matrix(paper_topic_probabilities_matrix, auth
 
 		np.save(AUTHOR_TOPIC_MATRIX_FILE, matrix)
 
-	print(sum(matrix[0, :]))
-
 	return matrix
 
 

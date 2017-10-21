@@ -70,7 +70,7 @@ class TopicsServer:
 
 	def prepare_visualizations(self):
 		"""Prepare LDA visualization."""
-		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary)
+		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
 		self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
 
 	def init_flask_server(self, debug_mode_enabled):
@@ -97,7 +97,7 @@ class TopicsServer:
 		  		author2doc=self.author2doc
 		  	))
 		self._add_resource(Paper, '/paper/<int:id>/')
-		self._add_resource(SearchTopic, '/topic')
+		self._add_resource(SearchTopic, '/topics/search/')
 		self._add_resource(Topic, '/topic/<int:id>/')
 		self._add_resource(Author, '/author/<int:id>/')
 

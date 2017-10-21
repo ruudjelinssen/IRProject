@@ -88,7 +88,7 @@ class SearchTopic(BaseResource):
 				'id': id,
 				'name': self.topics[id],
 				'probability': prob
-			} for id, prob in topics if prob > (1 / NUM_TOPICS * 5)
+			} for id, prob in topics if prob > (1 / NUM_TOPICS) * 3
 		]}
 
 
@@ -156,7 +156,6 @@ class Author(BaseResource):
 		if id in authors:
 			name = authors[id].name
 			names = list(self.author2doc.keys())
-			print(names.index(preprocessing.preproccess_author(name)))
 			topics = self.author_topic_probability_matrix[
 				names.index(preprocessing.preproccess_author(name))
 			]
@@ -267,7 +266,6 @@ class TopicAuthorEvolution(View):
 		for index, a in enumerate(top_authors):
 			for year, score in enumerate(top_authors_year_prob[:, index]):
 				points_x.append(year + 1987)
-				print('{} {}'.format(index, author_short_list[a[0]]))
 				points_y.append(index + 1)
 				sizes.append(score * NUM_TOPICS * 2)
 		p.circle(points_x, points_y, size=sizes, color='#4e88e5', alpha=0.65)
