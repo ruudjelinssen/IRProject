@@ -124,12 +124,7 @@ class Topic(BaseResource):
 			a_id, author = self.author_short_index_to_author[i]
 			relevant_authors.append((a_id, author, score, prob, amount))
 
-		top_words = []
-
-		get_terms = self.lda_model.get_topic_terms(id, topn=10)
-		for word_id,word_prob in  get_terms:
-			word = self.dictionary[word_id]
-			top_words.append([word,word_prob])
+		top_words = self.lda_model.show_topic(id, topn=20)
 
 		return {
 			'name': TOPICS[id],
