@@ -17,9 +17,10 @@ from ..helpers import constants
 import lucene
 
 from java.nio.file import Paths
-from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField, FieldType
+from org.apache.lucene.document import Document, TextField, Field, IntPoint, StoredField, FieldType, SortedNumericDocValuesField, SortedDocValuesField
 from org.apache.lucene.index import IndexWriter, IndexWriterConfig, Term, IndexOptions
 from org.apache.lucene.store import SimpleFSDirectory
+from org.apache.lucene.util import BytesRef
 
 
 class Indexer(object):
@@ -85,6 +86,7 @@ class Indexer(object):
     def __write_paper_to_index(self, paper):
         """
         Write a single paper with author information to the index
+
         :param common.paper.Paper paper:
         :return:
         """
@@ -93,18 +95,20 @@ class Indexer(object):
         concat = concat + ' ' + paper.paper_text + ' ' + str(paper.year)
 
         document = Document()
-        document.add(StoredField('paper_id', str(paper.id)))
+        document.add(StoredField("paper_id_store", str(paper.id)))
+        document.add(StoredField("year_store", paper.year))
+        document.add(IntPoint("year_int", paper.year))
         document.add(TextField("paper_title", paper.title, Field.Store.YES))
         document.add(TextField("event_type", paper.event_type, Field.Store.YES))
         document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
         document.add(TextField("abstract", paper.abstract, Field.Store.YES))
         document.add(TextField("paper_text", paper.paper_text, Field.Store.YES))
 
-        # We add the year as both an int point for easy searching
-        # and as a stored field for display purposes
+        # Add a sorted fields for sorting purposes
 
-        document.add(IntPoint("year", paper.year))
-        document.add(StoredField("year", paper.year))
+        document.add(SortedDocValuesField("paper_title_sort", BytesRef(paper.title)))
+        document.add(SortedNumericDocValuesField("paper_id", paper.id))
+        document.add(SortedNumericDocValuesField("year", paper.year))
 
         for author in paper.authors:
 

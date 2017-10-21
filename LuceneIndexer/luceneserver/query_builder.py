@@ -20,11 +20,17 @@ import lucene
 
 from org.apache.lucene.document import IntPoint
 from org.apache.lucene.index import Term
-from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery
+from org.apache.lucene.search import BooleanQuery, BooleanClause, MatchAllDocsQuery, FuzzyQuery, TermQuery, BoostQuery
 from org.apache.lucene.search.spans import SpanMultiTermQueryWrapper, SpanNearQuery
 
 
 class QueryBuilder(object):
+
+    constructs = [
+        'written by',
+        'written about',
+        'written in'
+    ]
 
     def __init__(self, query_params):
         """
@@ -51,18 +57,18 @@ class QueryBuilder(object):
         """
 
         if 'author' in self.query_params:
-            self.__construct_field('author', True)
+            self.__construct_field_from_url_params('author', True)
             self.has_author = True
 
         if 'year' in self.query_params:
             self.__check_year_range(self.query_params['year'])
             self.has_year = True
 
-        self.__construct_field('paper_title')
-        self.__construct_field('abstract')
-        self.__construct_field('event_type')
-        self.__construct_field('paper_text')
-        self.__construct_field('pdf_name')
+        self.__construct_field_from_url_params('paper_title')
+        self.__construct_field_from_url_params('abstract')
+        self.__construct_field_from_url_params('event_type')
+        self.__construct_field_from_url_params('paper_text')
+        self.__construct_field_from_url_params('pdf_name')
 
         if 'query' in self.query_params:
             self.__build_free_text_query(self.query_params['query'])
@@ -80,9 +86,32 @@ class QueryBuilder(object):
         """
 
         self.__check_blank(query_string)
-        self.__check_year_range(query_string)
-        self.__check_author_match(query_string)
-        self.__check_rest_text(query_string)
+
+        has_constructs = False
+
+        splits = self.__find_splits(query_string)
+
+        if self.constructs[0] in splits:
+            self.__construct_field('author', splits[self.constructs[0]])
+            has_constructs = True
+
+        if self.constructs[1] in splits:
+
+            self.__construct_field('paper_title', splits[self.constructs[1]], False, False, boost=3.0)
+            self.__construct_field('paper_title', splits[self.constructs[1]], True, False, boost=4.0)
+            self.__construct_field('abstract', splits[self.constructs[1]], False, False, boost=1.2)
+            self.__construct_field('abstract', splits[self.constructs[1]], True, False, boost=1.4)
+            self.__construct_field('paper_text', splits[self.constructs[1]], False, False, boost=1.0)
+            self.__construct_field('paper_text', splits[self.constructs[1]], True, False, boost=1.0)
+            has_constructs = True
+
+        if self.constructs[2] in splits:
+            self.__check_year_range(splits[self.constructs[2]])
+            has_constructs = True
+
+        if has_constructs is False:
+            self.__construct_field('content', query_string, False, False)
+            self.__construct_field('content', query_string, True, False)
 
     @staticmethod
     def construct_multi_term_span_query(field_name, term_text):
@@ -145,11 +174,12 @@ class QueryBuilder(object):
 
         return or_query_builder.build()
 
-    def __construct_field(self, field_name, is_phrase = False):
+    def __construct_field_from_url_params(self, field_name, is_phrase=False, must_occur=True, boost=1.0):
         """
-        Generic wrapper to be able to construct the query for a particular field
+        Wrapper to be able to construct a field using the url parameters we know of
 
         :param field_name:
+        :param is_phrase:
         :return:
         """
 
@@ -162,15 +192,34 @@ class QueryBuilder(object):
         if not text or not text.strip():
             return
 
+        self.__construct_field(field_name, text, is_phrase, must_occur, boost)
+
+    def __construct_field(self, field_name, text, is_phrase=False, must_occur=True, boost=1.0):
+        """
+        Generic wrapper to be able to construct the query for a particular field
+
+        :param field_name:
+        :return:
+        """
+
         text = text.strip().lower()
         self.is_blank_query = False
+
+        occurrence = BooleanClause.Occur.MUST
+
+        if must_occur is False:
+            occurrence = BooleanClause.Occur.SHOULD
 
         # If there is only one term for this field, add it to the builder directly
 
         if len(text.split(' ')) == 1:
 
             fuzzy_query = FuzzyQuery(Term(field_name, text), 2)
-            self.boolean_query_builder.add(fuzzy_query, BooleanClause.Occur.MUST)
+
+            if boost != 1.0:
+                fuzzy_query = BoostQuery(fuzzy_query, boost)
+
+            self.boolean_query_builder.add(fuzzy_query, occurrence)
             return
 
         # Get the available AND splits
@@ -185,7 +234,11 @@ class QueryBuilder(object):
                 # Now we have either author names, or author names separated with ors
 
                 or_query = QueryBuilder.construct_or_query(field_name, and_part, is_phrase)
-                self.boolean_query_builder.add(or_query, BooleanClause.Occur.MUST)
+
+                if boost != 1.0:
+                    or_query = BoostQuery(or_query, boost)
+
+                self.boolean_query_builder.add(or_query, occurrence)
             return
 
         # Get the available OR splits
@@ -196,7 +249,11 @@ class QueryBuilder(object):
         if len(or_split) > 1:
 
             or_query = QueryBuilder.construct_or_query(field_name, text, is_phrase)
-            self.boolean_query_builder.add(or_query, BooleanClause.Occur.MUST)
+
+            if boost != 1.0:
+                or_query = BoostQuery(or_query, boost)
+
+            self.boolean_query_builder.add(or_query, occurrence)
             return
 
         if len(text.split(' ')) > 1:
@@ -205,8 +262,84 @@ class QueryBuilder(object):
                 span_query = QueryBuilder.construct_multi_term_span_query(field_name, text)
             else:
                 span_query = QueryBuilder.construct_multi_term_query(field_name, text)
-            self.boolean_query_builder.add(span_query, BooleanClause.Occur.MUST)
+
+            if boost != 1.0:
+                span_query = BoostQuery(span_query, boost)
+
+            self.boolean_query_builder.add(span_query, occurrence)
             return
+
+    def __find_splits(self, query_string):
+        """
+        Determine the constructs used in the query string and split these up for further processing
+
+        :param query_string:
+        :return:
+        """
+
+        query_breakdown = {}
+
+        new_split = self.__find_split(query_string, False)
+
+        if not new_split:
+
+            return {}
+
+        construct_key = new_split['construct_key']
+
+        while new_split is not None and 'right_part' in new_split:
+
+            new_split = self.__find_split(new_split['right_part'], True)
+            query_breakdown[construct_key] = new_split['left_part']
+
+            if 'construct_key' in new_split:
+                construct_key = new_split['construct_key']
+
+        print(query_breakdown)
+
+        return query_breakdown
+
+    def __find_split(self, query_string, use_left_part=False):
+        """
+        Find the first available construct splitting of a query string and return it
+
+        :param query_string:
+        :param use_left_part:
+        :return:
+        """
+
+        smallest_index = len(query_string)
+        first_construct = -1
+
+        for list_pos, construct in enumerate(self.constructs):
+            index = query_string.find(construct)
+
+            if index < smallest_index and index > -1:
+                smallest_index = index
+                first_construct = list_pos
+
+        # We now know the first construct that is used
+
+        if first_construct == -1:
+
+            if use_left_part is True:
+                return {'left_part': query_string.strip()}
+            else:
+                return None
+
+        construct_key = self.constructs[first_construct]
+        right_part = query_string.split(self.constructs[first_construct])[1]
+
+        breakdown = {
+            'construct_key': construct_key,
+            'right_part': right_part
+        }
+
+        if use_left_part is True:
+            left_part = query_string.split(self.constructs[first_construct])[0]
+            breakdown['left_part'] = left_part.strip()
+
+        return breakdown
 
     def __check_blank(self, query_string):
         """
@@ -232,41 +365,10 @@ class QueryBuilder(object):
         if len(year_array) == 1:
 
             self.has_year = True
-            range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[0])
+            range_query = IntPoint.newRangeQuery('year_int', year_array[0], year_array[0])
             self.boolean_query_builder.add(range_query, BooleanClause.Occur.MUST)
         elif len(year_array) == 2:
 
             self.has_year = True
-            range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[1])
+            range_query = IntPoint.newRangeQuery('year_int', year_array[0], year_array[1])
             self.boolean_query_builder.add(range_query, BooleanClause.Occur.MUST)
-
-    def __check_author_match(self, query_string):
-        """
-        We check to see if an author name is present and do fuzzy matching on that author name
-
-        :return:
-        """
-
-        if 'written by' in query_string:
-
-            self.has_author = True
-
-            parts = self.query_string.split('written by')
-            self.query_string = parts[0].strip()
-            author_name = parts[1].strip()
-
-            self.__construct_field('author')
-
-    def __check_rest_text(self, query_string):
-        """
-        Check if we still have something left and search weighted in the rest of the text.
-
-        :return:
-        """
-
-        if query_string.strip() != '':
-
-            for word in query_string.split(' '):
-
-                term = Term('content', word)
-                self.boolean_query_builder.add(TermQuery(term), BooleanClause.Occur.MUST)

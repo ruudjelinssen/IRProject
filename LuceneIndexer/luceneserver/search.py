@@ -17,7 +17,7 @@ import lucene
 from java.nio.file import Paths
 from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher
+from org.apache.lucene.search import IndexSearcher, Sort, SortField, SortedNumericSortField
 from org.apache.lucene.search.highlight import SimpleHTMLFormatter, Highlighter, QueryScorer, TokenSources, SimpleFragmenter
 
 
@@ -66,13 +66,34 @@ class Search:
         :return:
         """
 
+        result = {}
         retrieved_files = []
 
         qb = QueryBuilder(self.query_params)
         query = qb.build_query()
         print(query)
 
-        hits = self.searcher.search(query, 10)
+        descending = False
+
+        if 'direction' in self.query_params:
+            if self.query_params['direction'] == 'descending':
+                descending = True
+
+        if 'order' in self.query_params:
+
+            if self.query_params['order'] == 'year':
+                sorter = Sort(SortedNumericSortField('year', SortField.Type.INT, descending))
+                hits = self.searcher.search(query, 10, sorter)
+
+            elif self.query_params['order'] == 'alphabetical':
+                sorter = Sort(SortField("paper_title_sort", SortField.Type.STRING, descending))
+                hits = self.searcher.search(query, 10, sorter)
+
+            else:
+                hits = self.searcher.search(query, 10)
+        else:
+            hits = self.searcher.search(query, 10)
+
         score_docs = hits.scoreDocs
         print("%s total matching documents." % len(score_docs))
 
@@ -98,14 +119,24 @@ class Search:
             for author in doc.getFields('author'):
                 authors.append(author.stringValue())
 
-            retrieved_files.append({
+            doc_result = {
                 'title': doc.get('paper_title'),
-                'year': doc.get('year'),
+                'year': doc.get('year_store'),
                 'authors': authors,
                 'event_type': doc.get('event_type'),
                 'pdf_name': doc.get('pdf_name'),
                 'abstract': doc.get('abstract'),
-                'highlight': fragment
-            })
+                'highlight': fragment,
+            }
 
-        return retrieved_files
+            if type(score_doc.score) == 'float':
+                    doc_result['score'] = score_doc.score
+
+            retrieved_files.append(doc_result)
+
+        result['meta'] = {
+            'total': hits.totalHits
+        }
+        result['results'] = retrieved_files
+
+        return result
