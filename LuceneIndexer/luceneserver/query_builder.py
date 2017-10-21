@@ -97,8 +97,12 @@ class QueryBuilder(object):
 
         if self.constructs[1] in splits:
 
-            self.__construct_field('abstract', splits[self.constructs[1]])
-            self.__construct_field('paper_text', splits[self.constructs[1]])
+            self.__construct_field('paper_title', splits[self.constructs[1]], False, False)
+            self.__construct_field('paper_title', splits[self.constructs[1]], True, False)
+            self.__construct_field('abstract', splits[self.constructs[1]], False, False)
+            self.__construct_field('abstract', splits[self.constructs[1]], True, False)
+            self.__construct_field('paper_text', splits[self.constructs[1]], False, False)
+            self.__construct_field('paper_text', splits[self.constructs[1]], True, False)
             has_constructs = True
 
         if self.constructs[2] in splits:
@@ -106,7 +110,8 @@ class QueryBuilder(object):
             has_constructs = True
 
         if has_constructs is False:
-            self.__construct_field('content', query_string)
+            self.__construct_field('content', query_string, False, False)
+            self.__construct_field('content', query_string, True, False)
 
     @staticmethod
     def construct_multi_term_span_query(field_name, term_text):
@@ -169,7 +174,7 @@ class QueryBuilder(object):
 
         return or_query_builder.build()
 
-    def __construct_field_from_url_params(self, field_name, is_phrase=False):
+    def __construct_field_from_url_params(self, field_name, is_phrase=False, must_occur=True):
         """
         Wrapper to be able to construct a field using the url parameters we know of
 
@@ -187,9 +192,9 @@ class QueryBuilder(object):
         if not text or not text.strip():
             return
 
-        self.__construct_field(field_name, text, is_phrase)
+        self.__construct_field(field_name, text, is_phrase, must_occur)
 
-    def __construct_field(self, field_name, text, is_phrase=False):
+    def __construct_field(self, field_name, text, is_phrase=False, must_occur=True):
         """
         Generic wrapper to be able to construct the query for a particular field
 
@@ -200,12 +205,17 @@ class QueryBuilder(object):
         text = text.strip().lower()
         self.is_blank_query = False
 
+        occurrence = BooleanClause.Occur.MUST
+
+        if must_occur is False:
+            occurrence = BooleanClause.Occur.SHOULD
+
         # If there is only one term for this field, add it to the builder directly
 
         if len(text.split(' ')) == 1:
 
             fuzzy_query = FuzzyQuery(Term(field_name, text), 2)
-            self.boolean_query_builder.add(fuzzy_query, BooleanClause.Occur.MUST)
+            self.boolean_query_builder.add(fuzzy_query, occurrence)
             return
 
         # Get the available AND splits
@@ -220,7 +230,7 @@ class QueryBuilder(object):
                 # Now we have either author names, or author names separated with ors
 
                 or_query = QueryBuilder.construct_or_query(field_name, and_part, is_phrase)
-                self.boolean_query_builder.add(or_query, BooleanClause.Occur.MUST)
+                self.boolean_query_builder.add(or_query, occurrence)
             return
 
         # Get the available OR splits
@@ -231,7 +241,7 @@ class QueryBuilder(object):
         if len(or_split) > 1:
 
             or_query = QueryBuilder.construct_or_query(field_name, text, is_phrase)
-            self.boolean_query_builder.add(or_query, BooleanClause.Occur.MUST)
+            self.boolean_query_builder.add(or_query, occurrence)
             return
 
         if len(text.split(' ')) > 1:
@@ -240,7 +250,7 @@ class QueryBuilder(object):
                 span_query = QueryBuilder.construct_multi_term_span_query(field_name, text)
             else:
                 span_query = QueryBuilder.construct_multi_term_query(field_name, text)
-            self.boolean_query_builder.add(span_query, BooleanClause.Occur.MUST)
+            self.boolean_query_builder.add(span_query, occurrence)
             return
 
     def __find_splits(self, query_string):
