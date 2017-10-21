@@ -283,7 +283,7 @@ class QueryBuilder(object):
 
         if not new_split:
 
-            return
+            return {}
 
         construct_key = new_split['construct_key']
 
@@ -365,10 +365,10 @@ class QueryBuilder(object):
         if len(year_array) == 1:
 
             self.has_year = True
-            range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[0])
+            range_query = IntPoint.newRangeQuery('year_int', year_array[0], year_array[0])
             self.boolean_query_builder.add(range_query, BooleanClause.Occur.MUST)
         elif len(year_array) == 2:
 
             self.has_year = True
-            range_query = IntPoint.newRangeQuery('year', year_array[0], year_array[1])
+            range_query = IntPoint.newRangeQuery('year_int', year_array[0], year_array[1])
             self.boolean_query_builder.add(range_query, BooleanClause.Occur.MUST)

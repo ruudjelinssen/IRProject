@@ -97,6 +97,7 @@ class Indexer(object):
         document = Document()
         document.add(StoredField("paper_id_store", str(paper.id)))
         document.add(StoredField("year_store", paper.year))
+        document.add(IntPoint("year_int", paper.year))
         document.add(TextField("paper_title", paper.title, Field.Store.YES))
         document.add(TextField("event_type", paper.event_type, Field.Store.YES))
         document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
