@@ -23,29 +23,33 @@
 
     <div class="row">
     @foreach($results as $result)
-            <div class="col-xs-8">
-                <section class="ResultCard">
-                    <h1 class="ResultTitle">{{$result->title}}</h1>
-                    <div class="QuickFacts">
-                        @if($result->year)
-                            <div class="QuickFact"><span class="lnr lnr-calendar-full"></span>{{$result->year}}</div>
-                        @endif
-                        @if($result->event_type)
-                            <div class="QuickFact"><span class="lnr lnr-earth"></span>{{$result->event_type}}</div>
-                        @endif
-                        <div class="QuickFact"><span class="lnr lnr-file-empty"></span> {{$result->pdf_name}}</div>
-                    </div>
+        <div class="col-xs-8">
+            <section class="ResultCard">
+                <h1 class="ResultTitle">
+                    <a href="/clustering?query_type=paper_by&entity_id={{$result->id}}&max_ref_count=2">{{$result->title}}</a>
+                </h1>
+                <div class="QuickFacts">
+                    @if($result->year)
+                        <div class="QuickFact"><span class="lnr lnr-calendar-full"></span>{{$result->year}}</div>
+                    @endif
+                    @if($result->event_type)
+                        <div class="QuickFact"><span class="lnr lnr-earth"></span>{{$result->event_type}}</div>
+                    @endif
+                    <div class="QuickFact"><span class="lnr lnr-file-empty"></span> {{$result->pdf_name}}</div>
+                </div>
 
-                    <span class="lnr lnr-user"></span>
-                    <ul class="AuthorList">
-                        @foreach($result->authors as $author)
-                            <li class="QuickFact"> {{$author}}</li>
-                        @endforeach
-                    </ul>
-                    <div>{!! $result->highlight !!}</div>
-                    <div>{{$result->abstract}}</div>
-                </section>
-            </div>
+                <span class="lnr lnr-user"></span>
+                <ul class="AuthorList">
+                    @foreach($result->authors as $author)
+                        <li class="QuickFact">
+                            <a href="/clustering?query_type=author_by&entity_id={{$author->id}}&max_ref_count=2">{{$author->title}}</a>
+                        </li>
+                    @endforeach
+                </ul>
+                <div class="HighlightedSnippets">{!! $result->highlight !!}</div>
+                <div>{{$result->abstract}}</div>
+            </section>
+        </div>
     @endforeach
     </div>
 

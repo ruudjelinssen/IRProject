@@ -1,5 +1,5 @@
 <div id="Sidebar">
-    <h1>IRDM Project</h1>
+    <h1 class="ProjectTitle">IRDM Project</h1>
 
     <ul class="nav">
         <li><a href="{{ url('/search') }}">Search</a></li>

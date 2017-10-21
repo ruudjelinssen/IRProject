@@ -10,6 +10,7 @@ from flask import Flask
 from flask_restful import Api
 
 from .routes import Papers
+from .routes import Authors
 from .helpers.javavm import JavaVM
 
 
@@ -45,3 +46,4 @@ class LuceneServer:
         """
 
         self.api.add_resource(Papers, '/papers')
+        self.api.add_resource(Authors, '/authors')

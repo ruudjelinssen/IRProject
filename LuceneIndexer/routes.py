@@ -22,3 +22,15 @@ class Papers(Resource):
 
         results = Search(query_args).get_results('papers')
         return results
+
+class Authors(Resource):
+    """The author API to be able to retrieve authors"""
+
+    def get(self):
+
+        # Get the user input as teh query parameter called query
+
+        query_args = request.args
+
+        results = Search(query_args).get_results('authors')
+        return results
