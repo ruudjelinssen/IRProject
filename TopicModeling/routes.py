@@ -14,8 +14,12 @@ from scipy.stats import gaussian_kde
 
 from TopicModeling import preprocessing
 from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
-from TopicModeling.config import TOPICS
+from TopicModeling.config import TOPICS, NUM_TOPICS
 from common.database import DataBase
+
+
+def calculate_score(prob, amount_of_papers):
+	return prob * amount_of_papers
 
 
 class BaseResource(Resource):
@@ -59,7 +63,7 @@ class Paper(BaseResource):
 		# Get topics it belongs to
 		if id in self.docno_to_index:
 			topics = self.paper_topic_probability_matrix[self.docno_to_index[id]]
-			topics = np.sort(topics)[::-1]
+			topics = sorted([(i, prob) for i, prob in enumerate(topics)], key=lambda x: x[1], reverse=True)
 			return {
 				'id': id,
 				'title': db.get_all_papers()[id].title,
@@ -67,7 +71,7 @@ class Paper(BaseResource):
 					'id': id,
 					'name': self.topics[id],
 					'probability': prob
-				} for id, prob in enumerate(topics) if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD]
+				} for id, prob in topics[:5] if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD]
 			}
 		return {
 			'error': 'Invalid id {}.'.format(id)
@@ -84,7 +88,7 @@ class SearchTopic(BaseResource):
 				'id': id,
 				'name': self.topics[id],
 				'probability': prob
-			} for id, prob in topics if prob > (1 / len(self.topics) * 5)
+			} for id, prob in topics if prob > (1 / NUM_TOPICS * 5)
 		]}
 
 
@@ -111,9 +115,8 @@ class Topic(BaseResource):
 			if not prob > 0.0:
 				continue
 			amount_of_papers = len(self.author2doc[self.author_short_names[i]])
-			score = math.pow(prob, 2) * amount_of_papers
-			if score > 1.0:
-				author_scores.append((i, score, prob, amount_of_papers))
+			score = calculate_score(prob, amount_of_papers)
+			author_scores.append((i, score, prob, amount_of_papers))
 
 		author_scores.sort(key=lambda x: x[1], reverse=True)
 
@@ -129,6 +132,7 @@ class Topic(BaseResource):
 			top_words.append([word,word_prob])
 
 		return {
+			'name': TOPICS[id],
 			'words': [{
 				'word': word,
 				'prob': word_prob,
@@ -157,10 +161,11 @@ class Author(BaseResource):
 		if id in authors:
 			name = authors[id].name
 			names = list(self.author2doc.keys())
+			print(names.index(preprocessing.preproccess_author(name)))
 			topics = self.author_topic_probability_matrix[
 				names.index(preprocessing.preproccess_author(name))
 			]
-			topics = np.sort(topics)[::-1]
+			topics = sorted([(i, prob) for i, prob in enumerate(topics)], key=lambda x: x[1], reverse=True)
 			return {
 				'id': id,
 				'name': authors[id].name,
@@ -168,7 +173,7 @@ class Author(BaseResource):
 					'id': id,
 					'name': self.topics[id],
 					'probability': prob
-				} for id, prob in enumerate(topics) if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD]
+				} for id, prob in topics[:5] if prob > MIN_PAPER_TOPIC_PROB_THRESHOLD]
 			}
 		return {
 			'error': 'Invalid id {}.'.format(id)
@@ -224,7 +229,7 @@ class TopicEvolution(View):
 
 class TopicAuthorEvolution(View):
 
-	TOP_N_AUTHORS = 10
+	TOP_N_AUTHORS = 20
 
 	def __init__(self, year_author_topic_matrix, author_topic_probability_matrix, author2doc):
 		self.year_author_topic_matrix = year_author_topic_matrix
@@ -249,21 +254,28 @@ class TopicAuthorEvolution(View):
 			if not prob > 0.0:
 				continue
 			amount_of_papers = len(self.author2doc[author_short_list[i]])
-			score = math.pow(prob, 2) * amount_of_papers
-			if score > 1.0:
-				author_scores.append((i, score, prob, amount_of_papers))
+			score = calculate_score(prob, amount_of_papers)
+			author_scores.append((i, score, prob, amount_of_papers))
 		author_scores.sort(key=lambda x: x[1], reverse=True)
 		top_authors = author_scores[:self.TOP_N_AUTHORS]
 
 		# Get values for each author
 		top_authors_year_prob = self.year_author_topic_matrix[:, [x[0] for x in top_authors], id]
 
-		cats = list(reversed([author_mapping[author_short_list[i]] for i, s, p, a in top_authors]))
+		cats = list([author_mapping[author_short_list[i]] for i, s, p, a in top_authors])
 
-		p = figure(y_range=cats, plot_width=900, x_range=(1986, 2017), toolbar_location=None)
+		p = figure(y_range=cats, plot_width=900, plot_height=900, x_range=(1986, 2017), toolbar_location=None)
 
-		#TODO: iets plotten in de grafiek (misschien gradient lijn die donkerder wordt als in een jaar een author meer doet voor dit topic)
-		# Of misschien circle die groter wordt
+		points_x = []
+		points_y = []
+		sizes = []
+		for index, a in enumerate(top_authors):
+			for year, score in enumerate(top_authors_year_prob[:, index]):
+				points_x.append(year + 1987)
+				print('{} {}'.format(index, author_short_list[a[0]]))
+				points_y.append(index + 1)
+				sizes.append(score * NUM_TOPICS * 2)
+		p.circle(points_x, points_y, size=sizes, color='#4e88e5', alpha=0.65)
 
 		p.outline_line_color = None
 		p.background_fill_color = "#efefef"

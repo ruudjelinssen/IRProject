@@ -11,10 +11,11 @@ import pyLDAvis.gensim
 from gensim.models import CoherenceModel, LdaModel
 
 from TopicModeling import preprocessing
+from TopicModeling.config import NUM_TOPICS
 from common.database import DataBase
 
 # Constansts
-MIN_PAPER_TOPIC_PROB_THRESHOLD = 0.2
+MIN_PAPER_TOPIC_PROB_THRESHOLD = 1 / NUM_TOPICS
 
 # The files
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
@@ -187,12 +188,12 @@ def get_year_author_topic_matrix(paper_topic_matrix, docno_to_index, author2doc)
 	return matrix
 
 
-def get_author_topic_probabilities_matrix(model, author2doc):
+def get_author_topic_probabilities_matrix(paper_topic_probabilities_matrix, author2doc, docno_to_index):
 	"""Returns matrix of authors x topic where the value is the probability
 	that author belongs to the topic.
 
-	:param model: ATM model
-	:type model: gensim.models.AuthorTopicModel
+	:param model: LDA model
+	:type model: gensim.models.LdaModel
 	:param author2doc: Dict
 	:type author2doc: dict
 	"""
@@ -203,19 +204,39 @@ def get_author_topic_probabilities_matrix(model, author2doc):
 	else:
 		logging.info('Creating author topic matrix.')
 
-		# Get authors from database
-		authors = author2doc.keys()
+		matrix = np.zeros(shape=(len(list(author2doc.keys())), paper_topic_probabilities_matrix.shape[1]))
 
-		matrix = np.zeros(shape=(len(authors), model.num_topics))
-
-		for i, author in enumerate(authors):
-			probs = model[author]
-			for topic, prob in probs:
-				matrix[i][topic] = prob
+		for i, (author, docs) in enumerate(author2doc.items()):
+			probs = np.zeros(shape=(paper_topic_probabilities_matrix.shape[1]))
+			for doc in docs:
+				probs += paper_topic_probabilities_matrix[docno_to_index[doc]]
+			probs = probs / len(docs)
+			matrix[i] = probs
 
 		np.save(AUTHOR_TOPIC_MATRIX_FILE, matrix)
 
+	print(sum(matrix[0, :]))
+
 	return matrix
+
+
+def get_author2doc():
+	"""Return dict with short author names as key and a list of doc ids as values"""
+
+	# Get all papers
+	papers = db.get_all()
+
+	# Create doc to author dictionary
+	author2doc = {}
+	for _id, paper in papers.items():
+		for author in paper.authors:
+			name = preprocessing.preproccess_author(author.name)
+			if name not in author2doc:
+				author2doc[name] = []
+			author2doc[name].append(_id)
+	logging.info('Number of different authors: {}'.format(len(author2doc)))
+
+	return author2doc
 
 
 def get_lda_model(corpus, dictionary, num_topics):
@@ -260,59 +281,3 @@ def get_lda_model(corpus, dictionary, num_topics):
 		logging.info(top_topics)
 
 	return model
-
-
-def get_atm_model(corpus, dictionary, docno_to_index, num_topics):
-	"""Returns matrix of paper x topic where the value is the probability
-	that paper belongs to the topic.
-
-
-	:param corpus: The corpus
-	:type corpus: gensim.corpora.MmCorpus
-	:param dictionary: The dictionary
-	:type dictionary: gensim.corpora.dictionary.Dictionary
-	:param docno_to_index: Dictionary from paper id to index in corpus
-	:type docno_to_index: dict
-	:param num_topics: When building the model, how many topics to use.
-	:type num_topics: int
-	:returns: The ATM model
-	:rtype: gensim.models.AuthorTopicModel
-	"""
-
-	# Get all papers
-	papers = db.get_all()
-
-	# Create doc to author dictionary
-	author2doc = {}
-	for _id, paper in papers.items():
-		for author in paper.authors:
-			name = preprocessing.preproccess_author(author.name)
-			if name not in author2doc:
-				author2doc[name] = []
-			author2doc[name].append(docno_to_index[_id])
-	logging.info('Number of different authors: {}'.format(len(author2doc)))
-
-	if os.path.exists(ATM_MODEL_FILE):
-		logging.info('Using cached version of ATM model. ({})'.format(ATM_MODEL_FILE))
-		model = gensim.models.AuthorTopicModel.load(ATM_MODEL_FILE)
-	else:
-		logging.info('Building ATM model.')
-
-		# Create the model
-		model = gensim.models.AuthorTopicModel(
-			corpus,
-			id2word=dictionary,
-			num_topics=num_topics,
-			author2doc=author2doc,
-			alpha='auto',
-			eta='auto',
-			passes=passes,
-			eval_every=eval_every,
-			serialized=True,
-			serialization_path=SERIALIZATION_FILE
-		)
-
-		# Save the model to a file
-		model.save(ATM_MODEL_FILE)
-
-	return model, author2doc

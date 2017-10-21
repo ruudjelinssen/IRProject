@@ -46,9 +46,8 @@ class TopicsServer:
 	def load_models(self):
 		"""Load all matrices and models in memory."""
 		self.corpus, self.dictionary, self.docno_to_index = preprocessing.get_from_file_or_build()
+		self.author2doc = models.get_author2doc()
 		self.lda_model = models.get_lda_model(self.corpus, self.dictionary, NUM_TOPICS)
-		self.atm_model, self.author2doc = models.get_atm_model(self.corpus, self.dictionary, self.docno_to_index,
-															   NUM_TOPICS)
 		self.author_short_names = list(self.author2doc.keys())
 		self.author_short_index_to_author = {}
 		for _id, author in db.get_all_authors().items():
@@ -62,8 +61,9 @@ class TopicsServer:
 			self.docno_to_index
 		)
 		self.author_topic_probability_matrix = models.get_author_topic_probabilities_matrix(
-			self.atm_model,
-			self.author2doc
+			self.paper_topic_probability_matrix,
+			self.author2doc,
+			self.docno_to_index
 		)
 		self.year_topic_matrix = models.get_year_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index)
 		self.year_author_topic_matrix = models.get_year_author_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index, self.author2doc)
