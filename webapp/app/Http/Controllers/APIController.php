@@ -29,8 +29,6 @@ class APIController extends Controller{
 
     public function showSearch(Request $request){
 
-        $request->query('query');
-
         $search_uri = 'http://127.0.0.1:5002/papers?';
 
         foreach($request->query() as $key => $value){
@@ -59,8 +57,32 @@ class APIController extends Controller{
 
 	public function showClusters(Request $request){
 
+		$request->query('query');
+
+		$query = [
+			"statements" => [
+				[
+					"statement" => "MATCH (a0:Author)-[r0:Wrote]-(p0:Paper {p_id: 6257})<-[:ReferencedIn*0..3]-(p1:Paper)-[w1:Wrote]-(a1:Author) RETURN p0,r0,p1,a0,w1,a1",
+					"resultDataContents" => ["graph"]
+				]
+			]
+		];
+
+		$headers = [
+			'Accept' => 'application/json',
+		];
+
+		$uri = 'http://localhost:7474/db/data/transaction/commit';
+
+		$client = new Client();
+
+		$res = $client->post($uri, [
+			'headers' => $headers,
+			'json' => $query
+		]);
+
 		return view('pages.clustering', [
-			'dummy' => 'hello'
+			'json' => $res->getBody()
 		]);
 	}
 }
