@@ -262,6 +262,9 @@ class TopicAuthorEvolution(View):
 
 		p = figure(y_range=cats, plot_width=900, x_range=(1986, 2017), toolbar_location=None)
 
+		#TODO: iets plotten in de grafiek (misschien gradient lijn die donkerder wordt als in een jaar een author meer doet voor dit topic)
+		# Of misschien circle die groter wordt
+
 		p.outline_line_color = None
 		p.background_fill_color = "#efefef"
 
