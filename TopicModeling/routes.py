@@ -4,12 +4,13 @@ import numpy as np
 import math
 import pyLDAvis
 import pyLDAvis.gensim
-from bokeh.models import Range1d, LinearAxis
+from bokeh.models import Range1d, LinearAxis, ColumnDataSource
 from bokeh.plotting import figure, show
 from bokeh.embed import file_html, components
 from flask import request, render_template
 from flask.views import View
 from flask_restful import Resource
+from scipy.stats import gaussian_kde
 
 from TopicModeling import preprocessing
 from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
@@ -205,3 +206,62 @@ class TopicEvolution(View):
 		script, div = components(p)
 
 		return render_template('empty.html', visualization=div, script=script)
+
+
+class TopicAuthorEvolution(View):
+
+	TOP_N_AUTHORS = 10
+
+	def __init__(self, year_author_topic_matrix, author_topic_probability_matrix, author2doc):
+		self.year_author_topic_matrix = year_author_topic_matrix
+		self.author_topic_probability_matrix = author_topic_probability_matrix
+		self.author2doc = author2doc
+
+	def dispatch_request(self, id):
+
+		# List of short names
+		author_short_list = list(self.author2doc.keys())
+
+		# Get short_name -> name mapping
+		db = DataBase('dataset/database.sqlite')
+		author_mapping = {}
+		for _id, author in db.get_all_authors().items():
+			author_mapping[preprocessing.preproccess_author(author.name)] = author.name
+
+		# Get top N authors in tuple (index, prob)
+		author_scores = []
+		probs = self.author_topic_probability_matrix[:, id]
+		for i, prob in enumerate(probs):
+			if not prob > 0.0:
+				continue
+			amount_of_papers = len(self.author2doc[author_short_list[i]])
+			score = math.pow(prob, 2) * amount_of_papers
+			if score > 1.0:
+				author_scores.append((i, score, prob, amount_of_papers))
+		author_scores.sort(key=lambda x: x[1], reverse=True)
+		top_authors = author_scores[:self.TOP_N_AUTHORS]
+
+		# Get values for each author
+		top_authors_year_prob = self.year_author_topic_matrix[:, [x[0] for x in top_authors], id]
+
+		cats = list(reversed([author_mapping[author_short_list[i]] for i, s, p, a in top_authors]))
+
+		p = figure(y_range=cats, plot_width=900, x_range=(1986, 2017), toolbar_location=None)
+
+		p.outline_line_color = None
+		p.background_fill_color = "#efefef"
+
+		p.ygrid.grid_line_color = None
+		p.xgrid.grid_line_color = "#dddddd"
+		p.xgrid.ticker = p.xaxis[0].ticker
+
+		p.axis.minor_tick_line_color = None
+		p.axis.major_tick_line_color = None
+		p.axis.axis_line_color = None
+
+		# show the results
+		script, div = components(p)
+
+		return render_template('empty.html', visualization=div, script=script)
+
+
