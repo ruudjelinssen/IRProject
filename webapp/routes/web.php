@@ -15,3 +15,8 @@ Route::any('/search', [
     'as' => 'search',
     'uses' => 'APIController@showSearch',
 ]);
+
+Route::any('/clustering', [
+	'as' => 'clustering',
+	'uses' => 'APIController@showClusters',
+]);

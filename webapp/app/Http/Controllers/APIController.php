@@ -39,12 +39,28 @@ class APIController extends Controller{
         }
 
         $res = $this->_client->request('GET', $search_uri);
+	    $res_decoded = \GuzzleHttp\json_decode($res->getBody());
 
         $query_model = new Query;
 
         return view('pages.search', [
-            'results' => \GuzzleHttp\json_decode($res->getBody()),
+        	'meta' => $res_decoded->meta,
+            'results' => $res_decoded->results,
             'query' => $query_model
         ]);
     }
+
+	/**
+	 * Retrieve cluster data
+	 *
+	 * @param Request $request
+	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+	 */
+
+	public function showClusters(Request $request){
+
+		return view('pages.clustering', [
+			'dummy' => 'hello'
+		]);
+	}
 }
