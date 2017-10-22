@@ -95,9 +95,10 @@ class Indexer(object):
         concat = concat + ' ' + paper.paper_text + ' ' + str(paper.year)
 
         document = Document()
-        document.add(StoredField("paper_id_store", str(paper.id)))
+        document.add(TextField("paper_id_store", str(paper.id), Field.Store.YES))
         document.add(StoredField("year_store", paper.year))
         document.add(IntPoint("year_int", paper.year))
+        document.add(IntPoint("paper_id_int", int(paper.id)))
         document.add(TextField("paper_title", paper.title, Field.Store.YES))
         document.add(TextField("event_type", paper.event_type, Field.Store.YES))
         document.add(TextField("pdf_name", paper.pdf_name, Field.Store.YES))
@@ -115,7 +116,8 @@ class Indexer(object):
             # Every author that we add to the same field simply concatenates that when searching
 
             document.add(TextField('author', author.name, Field.Store.YES))
-            document.add(StoredField('author_id', str(author.id)))
+            document.add(IntPoint("author_id_int", int(author.id)))
+            document.add(TextField('author_id', str(author.id), Field.Store.YES))
             concat = concat + ' ' + author.name
 
         # Finally concatenate every field together and then add it as a field called 'content' with term vectors enabled

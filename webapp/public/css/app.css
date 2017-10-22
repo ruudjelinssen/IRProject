@@ -8374,6 +8374,18 @@ body {
   top: 0;
 }
 
+#Sidebar {
+  text-transform: capitalize;
+}
+
+#Sidebar .ProjectTitle {
+  margin-left: 1.5rem;
+}
+
+#Sidebar .NavLink.is-active {
+  background: #eeeeee;
+}
+
 .CoverContainer {
   position: relative;
   height: 300px;
@@ -8423,6 +8435,27 @@ body {
           flex: 0 0 3rem;
 }
 
+.TopInfoPanel {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.ResultCard {
+  padding: 0 1rem 2rem;
+}
+
+.ResultCard .QuickFacts {
+  margin-bottom: 0.5rem;
+}
+
 .ResultCard .QuickFact {
   display: inline-block;
   margin-right: 1rem;
@@ -8437,12 +8470,16 @@ body {
   padding-left: 0.1rem;
 }
 
+.ResultCard .HighlightedSnippets {
+  margin: 1rem 0;
+}
+
 #Graph {
   position: fixed;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  left: 25%;
+  top: calc(50px + 1rem);
+  bottom: 1rem;
+  right: calc(25% + 1rem);
+  left: calc(25% + 1rem);
   margin: auto;
 }
 
@@ -8455,10 +8492,25 @@ body {
 #NavBar {
   min-height: 0;
   padding: 1rem 0;
+  left: calc(25% + 1.5rem);
 }
 
 #NavBar.navbar-default {
   background-color: #f8f8f8;
   border-color: #e7e7e7;
+}
+
+#RootEntityPanel {
+  margin-top: calc(50px + 3rem);
+}
+
+#RootEntityPanel .panel-heading,
+#ResultsPanel .panel-heading {
+  font-size: 2rem;
+  margin: 0;
+}
+
+#UnavailableContainer {
+  margin-top: calc(50px + 3rem);
 }
 

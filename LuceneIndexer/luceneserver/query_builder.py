@@ -56,6 +56,10 @@ class QueryBuilder(object):
         :return:
         """
 
+        if "id" in self.query_params:
+            term_query = TermQuery(Term('paper_id_store', str(self.query_params['id'])))
+            return term_query
+
         if 'author' in self.query_params:
             self.__construct_field_from_url_params('author', True)
             self.has_author = True

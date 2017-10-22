@@ -1,2 +1,13 @@
 #Sidebar{
+	text-transform: capitalize;
+
+	.ProjectTitle{
+		margin-left: 1.5rem;
+	}
+
+	.NavLink{
+		&.is-active{
+			background: #eeeeee;
+		}
+	}
 }

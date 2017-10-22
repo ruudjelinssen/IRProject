@@ -19,7 +19,7 @@ from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.store import SimpleFSDirectory
 from org.apache.lucene.search import IndexSearcher, Sort, SortField, SortedNumericSortField
 from org.apache.lucene.search.highlight import SimpleHTMLFormatter, Highlighter, QueryScorer, TokenSources, SimpleFragmenter
-
+from org.apache.lucene.queryparser.classic import QueryParser
 
 class Search:
 
@@ -56,9 +56,60 @@ class Search:
 
         if result_type == 'papers':
             return self.__get_papers()
+        elif result_type == 'authors':
+            return self.__get_authors()
         else:
             print('Result type is not supported.')
             return []
+
+    def __get_authors(self):
+        """
+        Function that only supports retrieval of a single author via ID.
+        :return:
+        """
+
+        if 'id' not in self.query_params:
+
+            return {
+                'meta': {'total': 0},
+                'results': []
+            }
+
+        author_id = str(self.query_params['id'])
+
+        query = QueryParser('author_id', self.analyzer).parse(author_id)
+        print(query)
+        hits = self.searcher.search(query, 10)
+        score_docs = hits.scoreDocs
+
+        author = {}
+
+        for score_doc in score_docs:
+
+            doc_id = score_doc.doc
+            doc = self.searcher.doc(doc_id)
+
+            author_ids_array = []
+
+            author_ids = doc.getFields('author_id')
+
+            for author_id_from_field in author_ids:
+                author_ids_array.append(author_id_from_field.stringValue())
+
+            index = 0
+            for author_field in doc.getFields('author'):
+                if str(author_ids_array[index]) == str(author_id):
+                    author = {'id': author_ids_array[index], 'title': author_field.stringValue()}
+                    break
+
+                index = index + 1
+
+        result = {
+            'meta': {'total': 1},
+            'results': author
+        }
+
+        return result
 
     def __get_papers(self):
         """
@@ -114,12 +165,22 @@ class Search:
             token_stream = TokenSources.getTermVectorTokenStreamOrNull('content', term_vectors, -1)
             fragment = highlighter.getBestFragments(token_stream, full_text, 3, '...')
 
+            author_ids_array = []
+
+            author_ids = doc.getFields('author_id')
+
+            for author_id_from_field in author_ids:
+                author_ids_array.append(author_id_from_field.stringValue())
+
             authors = []
+            index = 0
 
             for author in doc.getFields('author'):
-                authors.append(author.stringValue())
+                authors.append({'id': author_ids_array[index], 'title': author.stringValue()})
+                index = index + 1
 
             doc_result = {
+                'id': doc.get('paper_id_store'),
                 'title': doc.get('paper_title'),
                 'year': doc.get('year_store'),
                 'authors': authors,

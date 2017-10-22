@@ -39,7 +39,20 @@
 	}
 }
 
+.TopInfoPanel{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 1rem;
+}
+
 .ResultCard{
+	padding: 0 1rem 2rem;
+
+	.QuickFacts{
+		margin-bottom: 0.5rem;
+	}
+
 	.QuickFact{
 		display: inline-block;
 		margin-right: 1rem;
@@ -52,5 +65,9 @@
 	.AuthorList{
 		display: inline-block;
 		padding-left: 0.1rem;
+	}
+
+	.HighlightedSnippets{
+		margin: 1rem 0;
 	}
 }
