@@ -1,4 +1,4 @@
-bokeh==0.12.10
+bokeh==0.12.5
 Flask==0.12.2
 Flask-Cors==3.0.2
 Flask-Jsonpify==1.5.0
