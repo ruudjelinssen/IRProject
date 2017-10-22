@@ -8374,8 +8374,16 @@ body {
   top: 0;
 }
 
+#Sidebar {
+  text-transform: capitalize;
+}
+
 #Sidebar .ProjectTitle {
   margin-left: 1.5rem;
+}
+
+#Sidebar .NavLink.is-active {
+  background: #eeeeee;
 }
 
 .CoverContainer {
@@ -8487,5 +8495,9 @@ body {
 #ResultsPanel .panel-heading {
   font-size: 2rem;
   margin: 0;
+}
+
+#UnavailableContainer {
+  margin-top: calc(50px + 3rem);
 }
 

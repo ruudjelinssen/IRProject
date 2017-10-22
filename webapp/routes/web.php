@@ -20,3 +20,8 @@ Route::any('/clustering', [
 	'as' => 'clustering',
 	'uses' => 'APIController@showClusters',
 ]);
+
+Route::any('/evolution', [
+	'as' => 'evolution',
+	'uses' => 'APIController@showEvolution',
+]);

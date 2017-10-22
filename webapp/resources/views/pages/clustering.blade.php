@@ -68,8 +68,10 @@
     </section>
 
     @else
-        <h1>Please select some attributes to get started</h1>
-        <h2>Please click <a href="/search">here</a> to go to the search page and search for something cool.</h2>
+        <div id="UnavailableContainer">
+            <h1>Please select some attributes to get started</h1>
+            <h2>Please click <a href="/search">here</a> to go to the search page and search for something cool.</h2>
+        </div>
     @endif
 @endsection
 
