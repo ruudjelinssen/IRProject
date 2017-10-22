@@ -8,7 +8,7 @@
 
     <div id="GraphData" class="Hidden">{{$json}}</div>
 
-    <div id="NavBar" class="row navbar navbar-default navbar-static-top">
+    <div id="NavBar" class="row navbar navbar-default navbar-fixed-top">
 
         <div class="col-xs-10 col-xs-offset-1">
             {{ Form::model($query, ['method' => 'get', 'id' => 'ClusteringForm', 'class' => 'form-inline'])}}
@@ -30,6 +30,7 @@
         </div>
     </div>
 
+    @if($valid == true)
     <div id="Graph"></div>
 
     <section id="RootEntityPanel" class="col-xs-3 col-xs-offset-9">
@@ -65,6 +66,11 @@
             </div>
         </div>
     </section>
+
+    @else
+        <h1>Please select some attributes to get started</h1>
+        <h2>Please click <a href="/search">here</a> to go to the search page and search for something cool.</h2>
+    @endif
 @endsection
 
 @section('page-footer')

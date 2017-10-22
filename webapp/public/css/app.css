@@ -8471,11 +8471,16 @@ body {
 #NavBar {
   min-height: 0;
   padding: 1rem 0;
+  left: calc(25% + 1.5rem);
 }
 
 #NavBar.navbar-default {
   background-color: #f8f8f8;
   border-color: #e7e7e7;
+}
+
+#RootEntityPanel {
+  margin-top: calc(50px + 3rem);
 }
 
 #RootEntityPanel .panel-heading,

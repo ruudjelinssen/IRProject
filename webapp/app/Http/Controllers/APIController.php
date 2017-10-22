@@ -92,10 +92,11 @@ class APIController extends Controller{
 
 		$query_model = new Query;
 
-		if(!$query_type){
+		if(!$query_type || !$entity_id || !$max_ref_count){
 
 			return view('pages.clustering', [
-				'json' => 'Oops',
+				'valid' => false,
+				'json' => "",
 				'query' => $query_model
 			]);
 		}
@@ -153,6 +154,7 @@ class APIController extends Controller{
 		}
 
 		return view('pages.clustering', [
+			'valid' => true,
 			'json' => $res->getBody(),
 			'titles' => $titles,
 			'root' => $root,
