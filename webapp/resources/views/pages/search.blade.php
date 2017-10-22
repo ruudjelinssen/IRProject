@@ -22,7 +22,24 @@
     </div>
 
     <div class="row">
-    @foreach($results as $result)
+
+        <div class="col-xs-12 TopInfoPanel">
+            <span class="TotalResults">Total results: {{$meta->total}}</span>
+
+            {{ Form::model($query, ['method' => 'get', 'id' => 'OrderingForm', 'class' => 'form-inline'])}}
+
+            <div class="form-group">
+                <label>Sort by:</label>
+                {{Form::select('order', [
+                    'relevance' => 'Relevance', 'alphabetical' => 'Alphabetical', 'year' => 'Year'
+                  ], null, ['class' => 'form-control js-orderingSelect'])}}
+                {{Form::text('query', '', ['class' => 'Hidden'])}}
+            </div>
+
+            {{Form::close()}}
+        </div>
+
+        @foreach($results as $result)
         <div class="col-xs-8">
             <section class="ResultCard">
                 <h1 class="ResultTitle">
@@ -50,7 +67,11 @@
                 <div>{{$result->abstract}}</div>
             </section>
         </div>
-    @endforeach
+        @endforeach
     </div>
 
+@endsection
+
+@section('page-footer')
+    <script src="{{asset('js/search.js')}}" type="application/javascript"></script>
 @endsection
