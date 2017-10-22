@@ -6,6 +6,7 @@ from bokeh.plotting import figure
 from flask import request, render_template
 from flask.views import View
 from flask_restful import Resource
+from gensim import matutils
 
 from TopicModeling import preprocessing
 from TopicModeling.config import TOPICS, NUM_TOPICS
@@ -34,9 +35,11 @@ class BaseResource(Resource):
 	:type author_topic_probability_matrix: np.array
 	"""
 
-	def __init__(self, lda_model, corpus, dictionary, docno_to_index, author2doc, author_short_names,
+	def __init__(self, lda_model, atm_model, author_vectors, corpus, dictionary, docno_to_index, author2doc, author_short_names,
 				 author_short_index_to_author, topics, paper_topic_probability_matrix, author_topic_probability_matrix):
 		self.lda_model = lda_model
+		self.atm_model = atm_model
+		self.author_vectors = author_vectors
 		self.corpus = corpus
 		self.dictionary = dictionary
 		self.docno_to_index = docno_to_index
@@ -115,7 +118,6 @@ class Topic(BaseResource):
 		author_scores = []
 		relevant_authors = []
 
-		# TODO add more info
 		probs = self.author_topic_probability_matrix[:, id]
 		for i, prob in enumerate(probs):
 			if not prob > 0.0:
@@ -153,11 +155,43 @@ class Topic(BaseResource):
 		}
 
 
+def get_similar_authors(model, author_vectors, short_name):
+	def similarity(vector1, vector2):
+		"""Similarity between two vectors"""
+		dist = matutils.hellinger(matutils.sparse2full(vector1, model.num_topics), matutils.sparse2full(vector2, model.num_topics))
+		sim = 1.0 / (1.0 + dist)
+		return sim
+
+	def get_sims(vector1):
+		"""Similarity of one vector to others."""
+		sims = [(i, similarity(vector1, vector2)) for i, vector2 in enumerate(author_vectors) if len(model.author2doc[model.id2author[i]]) >= 3]
+		return sims
+
+	# Get similarities.
+	sims = get_sims(model.get_author_topics(short_name))
+
+	# Arrange author names, similarities, and author sizes in a list of tuples.
+	similarities = []
+	for i, sim in sims:
+		author_name = model.id2author[i]
+		amount_of_papers = len(model.author2doc[author_name])
+		if amount_of_papers >= 3:
+			if author_name != short_name and sim > 0.5:
+				similarities.append((author_name, sim, amount_of_papers))
+
+	return sorted(similarities, key=lambda x: x[1], reverse=True)[:10]
+
+
 class Author(BaseResource):
 	def get(self, id):
 		# Database
 		db = DataBase('dataset/database.sqlite')
 		authors = db.get_all_authors()
+
+		# Get short_name -> (id, name) mapping
+		author_mapping = {}
+		for _id, author in db.get_all_authors().items():
+			author_mapping[preprocessing.preproccess_author(author.name)] = (_id, author.name)
 
 		if id in authors:
 			name = authors[id].name
@@ -169,6 +203,12 @@ class Author(BaseResource):
 			return {
 				'id': id,
 				'name': authors[id].name,
+				'similar_authors': [{
+					'id': author_mapping[name][0],
+					'name': author_mapping[name][1],
+					'score': score,
+					'amount_of_papers': amount_of_papers
+				} for name, score, amount_of_papers in get_similar_authors(self.atm_model, self.author_vectors, preprocessing.preproccess_author(name))],
 				'topics': [{
 					'id': id,
 					'name': self.topics[id],

@@ -8,6 +8,7 @@ import math
 
 import numpy as np
 import pyLDAvis.gensim
+from gensim import matutils
 from gensim.models import CoherenceModel, LdaModel
 
 from TopicModeling import preprocessing
@@ -28,6 +29,7 @@ PAPER_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'paper_topic_matrix.npy')
 AUTHOR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'author_topic_matrix.npy')
 YEAR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'year_topic_matrix.npy')
 YEAR_AUTHOR_TOPIC_MATRIX_FILE = os.path.join(base_dir, 'year_author_topic_matrix.npy')
+AUTHOR_SIMILARITY_MATRIX_FILE = os.path.join(base_dir, 'author_similarity_matrix.npy')
 
 # The parameters for the models
 passes = 20
@@ -264,18 +266,53 @@ def get_lda_model(corpus, dictionary, num_topics):
 		# Save the model to a file
 		model.save(LDA_MODEL_FILE)
 
-		# Get the top models
-		top_topics = model.top_topics(corpus)
-
-		# Calculate the average coherence
-		avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topics
-		log_perplexity = model.log_perplexity(corpus)
-		bound = model.bound(corpus)
-
-		logging.info('Average topic coherence: {}'.format(avg_topic_coherence))
-		logging.info('Log perplexity: {}'.format(log_perplexity))
-		logging.info('Bound: {}'.format(bound))
-		logging.info('Top topics:')
-		logging.info(top_topics)
-
 	return model
+
+
+def get_atm_model(corpus, dictionary, author2doc, docno_to_index, num_topics):
+	"""Return atm model
+
+	:param corpus: The corpus
+	:type corpus: gensim.corpora.MmCorpus
+	:param dictionary: The dictionary
+	:type dictionary: gensim.corpora.dictionary.Dictionary
+	:param author2doc: author to doc ids
+	:type author2doc: dict
+	:param docno_to_index: Dictionary from paper id to index in corpus
+	:type docno_to_index: dict
+	:param num_topics: When building the model, how many topics to use.
+	:type num_topics: int
+	"""
+
+	if os.path.exists(ATM_MODEL_FILE):
+		logging.info('Using cached version of ATM model. ({})'.format(ATM_MODEL_FILE))
+		model = gensim.models.AuthorTopicModel.load(ATM_MODEL_FILE)
+	else:
+		logging.info('Building ATM model.')
+
+		for a, docs in author2doc.items():
+			for i, doc_id in enumerate(docs):
+				author2doc[a][i] = docno_to_index[doc_id]
+		logging.info('Number of different authors: {}'.format(len(author2doc)))
+
+		# Create the model
+		model = gensim.models.AuthorTopicModel(
+			corpus,
+			id2word=dictionary,
+			num_topics=num_topics,
+			author2doc=author2doc,
+			alpha='auto',
+			eta='auto',
+			passes=passes,
+			eval_every=eval_every,
+			serialized=True,
+			serialization_path=SERIALIZATION_FILE
+		)
+
+		# Save the model to a file
+		model.save(ATM_MODEL_FILE)
+	return model
+
+
+
+

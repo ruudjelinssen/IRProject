@@ -36,7 +36,8 @@ class TopicsServer:
 	lda_visualization_html = None
 	year_topic_matrix = None
 	year_author_topic_matrix = None
-	author_similarity_matrix = None
+	atm_model = None
+	author_vectors = None
 
 	def __init__(self):
 		self.app = Flask(__name__)
@@ -69,12 +70,13 @@ class TopicsServer:
 		)
 		self.year_topic_matrix = models.get_year_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index)
 		self.year_author_topic_matrix = models.get_year_author_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index, self.author2doc)
-		# self.author_similarity_matrix = models.get_author_similarity_matrix(self.corpus, self.dictionary, self.author2doc, self.docno_to_index, NUM_TOPICS)
+		self.atm_model = models.get_atm_model(self.corpus, self.dictionary, self.author2doc, self.docno_to_index, NUM_TOPICS)
+		self.author_vectors = [self.atm_model.get_author_topics(author) for author in self.atm_model.id2author.values()]
 
 	def prepare_visualizations(self):
 		"""Prepare LDA visualization."""
-		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
-		self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
+		# vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
+		# self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
 
 	def init_flask_server(self, debug_mode_enabled):
 		"""
@@ -91,7 +93,7 @@ class TopicsServer:
 		Add our api resource routes
 		:return:
 		"""
-		self.app.add_url_rule('/visualization/lda/', view_func=Visualization.as_view('lda_vis', visualization=self.lda_visualization_html))
+		# self.app.add_url_rule('/visualization/lda/', view_func=Visualization.as_view('lda_vis', visualization=self.lda_visualization_html))
 		self.app.add_url_rule('/visualization/topicevolution/<int:id>/', view_func=TopicEvolution.as_view('topic_evolution', year_topic_matrix=self.year_topic_matrix))
 		self.app.add_url_rule('/visualization/topicauthorevolution/<int:id>/',
 	  		view_func=TopicAuthorEvolution.as_view('topic_author_evolution',
@@ -114,6 +116,8 @@ class TopicsServer:
 	def _add_resource(self, resource, url):
 		args = (
 			self.lda_model,
+			self.atm_model,
+			self.author_vectors,
 			self.corpus,
 			self.dictionary,
 			self.docno_to_index,
