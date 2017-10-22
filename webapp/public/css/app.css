@@ -8374,6 +8374,23 @@ body {
   top: 0;
 }
 
+.panel-heading {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.PaperTitle {
+  color: #0098b1;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.PaperTitle:hover {
+  text-decoration: underline;
+}
+
 #Sidebar {
   text-transform: capitalize;
 }
@@ -8504,13 +8521,62 @@ body {
   margin-top: calc(50px + 3rem);
 }
 
-#RootEntityPanel .panel-heading,
-#ResultsPanel .panel-heading {
-  font-size: 2rem;
-  margin: 0;
-}
-
 #UnavailableContainer {
   margin-top: calc(50px + 3rem);
+}
+
+#TopicsContainer {
+  margin-top: 2rem;
+}
+
+#TopicsContainer .AvailableTopicsList {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+}
+
+#TopicsContainer .AvailableTopicsList .TopicName {
+  width: 50%;
+}
+
+#TopicsContainer .AvailableTopicsList .TopicName:hover {
+  background-color: #bee5eb;
+  color: #0c5460;
+  cursor: pointer;
+}
+
+#TopicsContainer .TopicsContainerTitle {
+  margin-top: 1rem;
+}
+
+#TopicsContainer .VisButton {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+}
+
+#TopicsContainer .ButtonContainer {
+  margin-top: 1rem;
+}
+
+#PaperModal .ModalPaperTitle {
+  margin-top: 0;
+}
+
+#PaperModal .PaperAbstract {
+  margin: 1rem 0;
+}
+
+#LDAVisualisation {
+  position: fixed;
+  right: 0;
+  width: 75%;
+  height: 100vh;
 }
 

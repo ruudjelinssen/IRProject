@@ -184,7 +184,7 @@ class APIController extends Controller{
 
 		$query_model = new Query;
 
-		return view('pages.evolution', [
+		return view('pages.topicviz', [
 			'query' => $query_model
 		]);
 	}
@@ -199,20 +199,61 @@ class APIController extends Controller{
 
 	public function showTopics(Request $request){
 
-		$search_uri = 'http://127.0.0.1:5002/papers?';
+		$all_topics_uri = 'http://127.0.0.1:5003/topics/';
+		$single_topic_uri = 'http://127.0.0.1:5003/topic/';
+		$single_paper_uri = 'http://127.0.0.1:5002/papers?id=';
+		$single_paper_topic_uri = 'http://127.0.0.1:5003/paper/';
+		$single_author_uri = 'http://127.0.0.1:5003/author/';
 
-		foreach($request->query() as $key => $value){
+		$topic_id = $request->query('topic_id');
+		$topic_info = null;
 
-			$search_uri = $search_uri . $key . '=' . $value . '&';
+		if(($topic_id || $topic_id == 0) && $topic_id != ''){
+
+			$res = $this->_client->request('GET', $single_topic_uri . $topic_id);
+			$topic_info = \GuzzleHttp\json_decode($res->getBody());
 		}
 
-		$res = $this->_client->request('GET', $search_uri);
-		$res_decoded = \GuzzleHttp\json_decode($res->getBody());
+		$paper_id = $request->query('paper_id');
+		$paper_info = null;
+		$paper_topics = null;
+
+		if($paper_id){
+
+			$res = $this->_client->request('GET', $single_paper_uri . $paper_id);
+			$paper_info = (\GuzzleHttp\json_decode($res->getBody())->results)[0];
+			$res = $this->_client->request('GET', $single_paper_topic_uri . $paper_id);
+			$paper_topics = (\GuzzleHttp\json_decode($res->getBody()))->topics;
+		}
+
+		$author_id = $request->query('author_id');
+		$author_info = null;
+
+		if($author_id){
+
+			$res = $this->_client->request('GET', $single_author_uri . $author_id);
+			$res_decoded = (\GuzzleHttp\json_decode($res->getBody()))->topics;
+			$author_name = (\GuzzleHttp\json_decode($res->getBody()))->name;
+		}
+		else{
+
+			$res = $this->_client->request('GET', $all_topics_uri);
+			$res_decoded = (\GuzzleHttp\json_decode($res->getBody()))->topics;
+			$author_name = '';
+		}
 
 		$query_model = new Query;
 
 		return view('pages.topics', [
-			'query' => $query_model
+			'query' => $query_model,
+			'all_topics' => $res_decoded,
+			'topic_info' => $topic_info,
+			'paper_info' => $paper_info,
+			'paper_topics' => $paper_topics,
+			'author_name' => $author_name,
+			'query_info' => [
+				'topic_id' => $topic_id
+			]
 		]);
 	}
 }

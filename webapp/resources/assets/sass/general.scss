@@ -22,3 +22,19 @@ html, body {
 	}
 }
 
+.panel-heading{
+	font-size: 2rem;
+	margin: 0;
+}
+
+.PaperTitle{
+	color: #0098b1;
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&:hover{
+		text-decoration: underline;
+	}
+}

@@ -68,6 +68,39 @@
             </section>
         </div>
         @endforeach
+
+        {{--<div class="col-xs-12">--}}
+            {{--<div class="DesktopOnlyBlock ResultsNum">--}}
+                {{--Showing {{$meta->start}} - {{$meta->end}} of {{$meta->total}}--}}
+            {{--</div>--}}
+
+            {{--<ul class="Paging">--}}
+
+                {{--@if($show_first == true)--}}
+
+                {{--<li class="Left">--}}
+                    {{--<button value="{{$first_start}}">{{$first_number}}</button>--}}
+                {{--</li>--}}
+                {{--@endif--}}
+
+                {{--@if($show_left_spacer == true)--}}
+                {{--<li class="Left Spacer">&middot;&middot;&middot;</li>--}}
+                {{--@endif--}}
+
+                {{--[{loop Pages}]--}}
+                {{--<li class="Left ">--}}
+                    {{--<button class="[{if selected is true}]CurrentPage[{if selected end}] [{if four_digits is true}] FourDigits[{if four_digits end}]" value="[{var start}]">[{var page}]</button>--}}
+                {{--</li>--}}
+                {{--[{loop Pages end}]--}}
+
+                {{--<li class="Left">--}}
+                    {{--<button value="[{var next_start}]" class="NextPage TextNav" [{if enable_next is false}]disabled[{if enable_next end}]>--}}
+                        {{--Next--}}
+                        {{--<i class="lnr-chevron-right ArrowIcon"></i>--}}
+                    {{--</button>--}}
+                {{--</li>--}}
+            {{--</ul>--}}
+        {{--</div>--}}
     </div>
 
 @endsection

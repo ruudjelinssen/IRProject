@@ -1,0 +1,50 @@
+#TopicsContainer{
+	margin-top: 2rem;
+
+	.AvailableTopicsList{
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+
+		.TopicName{
+			width: 50%;
+
+			&:hover{
+				background-color: #bee5eb;
+				color: #0c5460;
+				cursor: pointer;
+			}
+		}
+	}
+
+	.TopicsContainerTitle{
+		margin-top: 1rem;
+	}
+
+	.VisButton{
+		position: absolute;
+		right: 1rem;
+		top: 1rem;
+	}
+
+	.ButtonContainer{
+		margin-top: 1rem;
+	}
+}
+
+#PaperModal{
+	.ModalPaperTitle{
+		margin-top: 0;
+	}
+
+	.PaperAbstract{
+		margin: 1rem 0;
+	}
+}
+
+#LDAVisualisation{
+	position: fixed;
+	right: 0;
+	width: 75%;
+	height: 100vh;
+}
