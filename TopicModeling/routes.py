@@ -49,6 +49,17 @@ class BaseResource(Resource):
 		self.author_short_index_to_author = author_short_index_to_author
 
 
+class Topics(BaseResource):
+	"""Returns all topics."""
+	def get(self):
+		return {
+			'topics': [{
+				'id': i,
+				'name': name
+			} for i, name in enumerate(TOPICS)]
+		}
+
+
 class Paper(BaseResource):
 	"""Returns topic information about a paper."""
 

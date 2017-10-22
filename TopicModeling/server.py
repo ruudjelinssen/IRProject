@@ -35,6 +35,7 @@ class TopicsServer:
 	lda_visualization_html = None
 	year_topic_matrix = None
 	year_author_topic_matrix = None
+	author_similarity_matrix = None
 
 	def __init__(self):
 		self.app = Flask(__name__)
@@ -67,6 +68,7 @@ class TopicsServer:
 		)
 		self.year_topic_matrix = models.get_year_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index)
 		self.year_author_topic_matrix = models.get_year_author_topic_matrix(self.paper_topic_probability_matrix, self.docno_to_index, self.author2doc)
+		# self.author_similarity_matrix = models.get_author_similarity_matrix(self.corpus, self.dictionary, self.author2doc, self.docno_to_index, NUM_TOPICS)
 
 	def prepare_visualizations(self):
 		"""Prepare LDA visualization."""
@@ -105,6 +107,7 @@ class TopicsServer:
 		 ))
 		self._add_resource(Paper, '/paper/<int:id>/')
 		self._add_resource(SearchTopic, '/topics/search/')
+		self._add_resource(Topics, '/topics/')
 		self._add_resource(Topic, '/topic/<int:id>/')
 		self._add_resource(Author, '/author/<int:id>/')
 
