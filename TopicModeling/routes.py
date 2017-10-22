@@ -251,15 +251,18 @@ class TopicEvolution(View):
 
 		# create a new plot
 		p = figure(tools='', toolbar_location=None, title="Evolution of \'{}\'".format(TOPICS[id]), x_axis_label='years',
-				   y_axis_label='topic distribution'
+				   y_axis_label='topic distribution', y_range=Range1d(0, max(y0) * 1.05), plot_width=1000, plot_height=600
 	   	)
 
 		p.extra_y_ranges = {'average':  Range1d(start=0, end=max(y1) * 1.05)}
 		p.add_layout(LinearAxis(y_range_name='average'), 'right')
 
 		# add some renderers
-		p.vbar(x, top=y0, width=0.7, legend="Total")
-		p.line(x, y=y1, line_width=2, legend="Average per paper", color="orange", y_range_name='average')
+		p.vbar([i - 0.15 for i in x], top=y0, width=0.3, legend="Total")
+		p.vbar([i + 0.15 for i in x], top=y1, width=0.3, legend="Average per paper", color="orange", y_range_name='average')
+
+		p.legend.location = "top_left"
+		p.yaxis[1].axis_label = "Average per paper"
 
 		# show the results
 		script, div = components(p)
