@@ -1,20 +1,15 @@
-from collections import defaultdict
-
-import numpy as np
 import math
-import pyLDAvis
-import pyLDAvis.gensim
-from bokeh.models import Range1d, LinearAxis, ColumnDataSource, FixedTicker, FuncTickFormatter, CategoricalTickFormatter
-from bokeh.plotting import figure, show
-from bokeh.embed import file_html, components
+
+from bokeh.embed import components
+from bokeh.models import Range1d, LinearAxis, FixedTicker
+from bokeh.plotting import figure
 from flask import request, render_template
 from flask.views import View
 from flask_restful import Resource
-from scipy.stats import gaussian_kde
 
 from TopicModeling import preprocessing
-from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
 from TopicModeling.config import TOPICS, NUM_TOPICS
+from TopicModeling.models import MIN_PAPER_TOPIC_PROB_THRESHOLD
 from common.database import DataBase
 
 

@@ -7,7 +7,7 @@ from flask import Flask
 from flask_restful import Api
 
 from TopicModeling import models
-from TopicModeling.config import NUM_TOPICS, FLASK_PORT
+from TopicModeling.config import FLASK_PORT
 from TopicModeling.routes import *
 
 app = Flask(__name__, template_folder=os.path.join('TopicModeling', 'templates'))
