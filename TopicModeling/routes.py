@@ -250,7 +250,7 @@ class TopicEvolution(View):
 		y1 = [y / docs_per_year[x + 1987] for x, y in enumerate(data)]
 
 		# create a new plot
-		p = figure(tools="", title="Evolution of \'{}\'".format(TOPICS[id]), x_axis_label='years',
+		p = figure(tools='', toolbar_location=None, title="Evolution of \'{}\'".format(TOPICS[id]), x_axis_label='years',
 				   y_axis_label='topic distribution'
 	   	)
 
@@ -259,7 +259,7 @@ class TopicEvolution(View):
 
 		# add some renderers
 		p.vbar(x, top=y0, width=0.7, legend="Total")
-		p.line(x, y=y1, line_width=2, legend="Average per paper", color="orange", tools='', toolbar_location=None, y_range_name='average')
+		p.line(x, y=y1, line_width=2, legend="Average per paper", color="orange", y_range_name='average')
 
 		# show the results
 		script, div = components(p)
