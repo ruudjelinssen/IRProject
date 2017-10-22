@@ -25,3 +25,8 @@ Route::any('/evolution', [
 	'as' => 'evolution',
 	'uses' => 'APIController@showEvolution',
 ]);
+
+Route::any('/topics', [
+	'as' => 'topics',
+	'uses' => 'APIController@showTopics',
+]);

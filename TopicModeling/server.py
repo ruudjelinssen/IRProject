@@ -9,6 +9,7 @@ from flask_restful import Api
 from TopicModeling import models
 from TopicModeling.config import FLASK_PORT
 from TopicModeling.routes import *
+import pyLDAvis
 
 app = Flask(__name__, template_folder=os.path.join('TopicModeling', 'templates'))
 api = Api(app)
@@ -72,9 +73,8 @@ class TopicsServer:
 
 	def prepare_visualizations(self):
 		"""Prepare LDA visualization."""
-		pass
-		# vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
-		# self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
+		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
+		self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
 
 	def init_flask_server(self, debug_mode_enabled):
 		"""
@@ -91,7 +91,7 @@ class TopicsServer:
 		Add our api resource routes
 		:return:
 		"""
-		# self.app.add_url_rule('/visualization/lda/', view_func=Visualization.as_view('lda_vis', visualization=self.lda_visualization_html))
+		self.app.add_url_rule('/visualization/lda/', view_func=Visualization.as_view('lda_vis', visualization=self.lda_visualization_html))
 		self.app.add_url_rule('/visualization/topicevolution/<int:id>/', view_func=TopicEvolution.as_view('topic_evolution', year_topic_matrix=self.year_topic_matrix))
 		self.app.add_url_rule('/visualization/topicauthorevolution/<int:id>/',
 	  		view_func=TopicAuthorEvolution.as_view('topic_author_evolution',
