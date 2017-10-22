@@ -70,8 +70,9 @@ class TopicsServer:
 
 	def prepare_visualizations(self):
 		"""Prepare LDA visualization."""
-		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
-		self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
+		pass
+		# vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
+		# self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
 
 	def init_flask_server(self, debug_mode_enabled):
 		"""
@@ -88,14 +89,20 @@ class TopicsServer:
 		Add our api resource routes
 		:return:
 		"""
-		self.app.add_url_rule('/visualization/lda/', view_func=Visualization.as_view('lda_vis', visualization=self.lda_visualization_html))
+		# self.app.add_url_rule('/visualization/lda/', view_func=Visualization.as_view('lda_vis', visualization=self.lda_visualization_html))
 		self.app.add_url_rule('/visualization/topicevolution/<int:id>/', view_func=TopicEvolution.as_view('topic_evolution', year_topic_matrix=self.year_topic_matrix))
-		self.app.add_url_rule('/visualization/authortopicevolution/<int:id>/',
-	  		view_func=TopicAuthorEvolution.as_view('author_topic_evolution',
+		self.app.add_url_rule('/visualization/topicauthorevolution/<int:id>/',
+	  		view_func=TopicAuthorEvolution.as_view('topic_author_evolution',
 		 		year_author_topic_matrix=self.year_author_topic_matrix,
 		   		author_topic_probability_matrix=self.author_topic_probability_matrix,
 		  		author2doc=self.author2doc
 		  	))
+		self.app.add_url_rule('/visualization/authortopicevolution/<int:id>/',
+							  view_func=AuthorTopicEvolution.as_view('author_topic_evolution',
+			 year_author_topic_matrix=self.year_author_topic_matrix,
+			 author_topic_probability_matrix=self.author_topic_probability_matrix,
+			 author2doc=self.author2doc
+		 ))
 		self._add_resource(Paper, '/paper/<int:id>/')
 		self._add_resource(SearchTopic, '/topics/search/')
 		self._add_resource(Topic, '/topic/<int:id>/')

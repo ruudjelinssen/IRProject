@@ -3,7 +3,7 @@ NUM_TOPICS = 35
 
 # Topic labels
 TOPICS = [
-	'Topic 0: Neural Networks',
+	'Neural Networks',
 	'Topic 1',
 	'Topic 2',
 	'Topic 3',

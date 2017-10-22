@@ -176,7 +176,7 @@ def get_year_author_topic_matrix(paper_topic_matrix, docno_to_index, author2doc)
 
 		for year, y_docs in years_to_docs.items():
 			y_docs = [docno_to_index[d] for d in y_docs]
-			for author, a_docs in author2doc.items():
+			for author, a_docs in [(a, [docno_to_index[i] for i in docs]) for a, docs in author2doc.items()]:
 				author_index = list(author2doc.keys()).index(author)
 				docs_this_year_this_author = list(set(y_docs) & set(a_docs))
 

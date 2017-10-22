@@ -4,7 +4,7 @@ import numpy as np
 import math
 import pyLDAvis
 import pyLDAvis.gensim
-from bokeh.models import Range1d, LinearAxis, ColumnDataSource
+from bokeh.models import Range1d, LinearAxis, ColumnDataSource, FixedTicker, FuncTickFormatter, CategoricalTickFormatter
 from bokeh.plotting import figure, show
 from bokeh.embed import file_html, components
 from flask import request, render_template
@@ -213,7 +213,7 @@ class TopicEvolution(View):
 
 		# add some renderers
 		p.vbar(x, top=y0, width=0.7, legend="Total")
-		p.line(x, y=y1, line_width=2, legend="Average per paper", color="orange", y_range_name='average')
+		p.line(x, y=y1, line_width=2, legend="Average per paper", color="orange", tools='', toolbar_location=None, y_range_name='average')
 
 		# show the results
 		script, div = components(p)
@@ -231,12 +231,16 @@ class TopicAuthorEvolution(View):
 		self.author2doc = author2doc
 
 	def dispatch_request(self, id):
+		# Database connection
+		db = DataBase('dataset/database.sqlite')
+
+		if not id < NUM_TOPICS:
+			return 'Invalud id {}.'.format(id)
 
 		# List of short names
 		author_short_list = list(self.author2doc.keys())
 
 		# Get short_name -> name mapping
-		db = DataBase('dataset/database.sqlite')
 		author_mapping = {}
 		for _id, author in db.get_all_authors().items():
 			author_mapping[preprocessing.preproccess_author(author.name)] = author.name
@@ -258,7 +262,7 @@ class TopicAuthorEvolution(View):
 
 		cats = list([author_mapping[author_short_list[i]] for i, s, p, a in top_authors])
 
-		p = figure(y_range=cats, plot_width=900, plot_height=900, x_range=(1986, 2017), toolbar_location=None)
+		p = figure(y_range=cats, plot_width=900, plot_height=900, x_range=(1986, 2017), tools='', toolbar_location=None, title="Author evolution for '{}'".format(TOPICS[id]))
 
 		points_x = []
 		points_y = []
@@ -273,8 +277,12 @@ class TopicAuthorEvolution(View):
 		p.outline_line_color = None
 		p.background_fill_color = "#efefef"
 
-		p.ygrid.grid_line_color = None
+		p.xaxis.major_label_orientation = math.pi / 4
+		p.xaxis.ticker = FixedTicker(ticks=list(range(1987, 2017)))
+
+		p.ygrid.grid_line_color = "#dddddd"
 		p.xgrid.grid_line_color = "#dddddd"
+		p.ygrid.ticker = p.yaxis[0].ticker
 		p.xgrid.ticker = p.xaxis[0].ticker
 
 		p.axis.minor_tick_line_color = None
@@ -285,5 +293,76 @@ class TopicAuthorEvolution(View):
 		script, div = components(p)
 
 		return render_template('empty.html', visualization=div, script=script)
+
+
+class AuthorTopicEvolution(View):
+
+	TOP_N_TOPICS = 10
+
+	def __init__(self, year_author_topic_matrix, author_topic_probability_matrix, author2doc):
+		self.year_author_topic_matrix = year_author_topic_matrix
+		self.author_topic_probability_matrix = author_topic_probability_matrix
+		self.author2doc = author2doc
+
+	def dispatch_request(self, id):
+		# Database
+		db = DataBase('dataset/database.sqlite')
+		authors = db.get_all_authors()
+
+		if id in authors:
+			# Author preprocessed name
+			author_short_name = preprocessing.preproccess_author(authors[id].name)
+
+			# List of short names
+			author_short_list = list(self.author2doc.keys())
+
+			# Author index
+			author_index = author_short_list.index(author_short_name)
+
+			# Get all topic probabilties for this author
+			topic_probabilities = self.author_topic_probability_matrix[author_index, :]
+
+			# Pick N best
+			top_n_topics = sorted([(i, prob) for i, prob in enumerate(topic_probabilities)], key=lambda x: x[1], reverse=True)[:self.TOP_N_TOPICS]
+
+			# Get values for each author
+			top_topics_year_prob = self.year_author_topic_matrix[:, author_index, [x[0] for x in top_n_topics]]
+
+			cats = list([TOPICS[i] for i, prob in top_n_topics])
+
+			p = figure(y_range=cats, plot_width=900, plot_height=700, x_range=(1986, 2017), tools='', toolbar_location=None, title="Topic evolution for '{}' (top {} topics)".format(authors[id].name, self.TOP_N_TOPICS))
+
+			points_x = []
+			points_y = []
+			sizes = []
+			for index, prob in enumerate(top_n_topics):
+				for year, score in enumerate(top_topics_year_prob[:, index]):
+					points_x.append(year + 1987)
+					points_y.append(index + 1)
+					sizes.append(score * NUM_TOPICS * 2)
+			p.circle(points_x, points_y, size=sizes, color='#4e88e5', alpha=0.65)
+
+			p.outline_line_color = None
+			p.background_fill_color = "#efefef"
+
+			p.xaxis.major_label_orientation = math.pi / 4
+			p.xaxis.ticker = FixedTicker(ticks=list(range(1987, 2017)))
+
+			p.ygrid.grid_line_color = "#dddddd"
+			p.xgrid.grid_line_color = "#dddddd"
+			p.ygrid.ticker = p.yaxis[0].ticker
+			p.xgrid.ticker = p.xaxis[0].ticker
+
+			p.axis.minor_tick_line_color = None
+			p.axis.major_tick_line_color = None
+			p.axis.axis_line_color = None
+
+			# show the results
+			script, div = components(p)
+
+			return render_template('empty.html', visualization=div, script=script)
+		else:
+			return "Invalid id {}.".format(id)
+
 
 
