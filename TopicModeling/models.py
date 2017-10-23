@@ -16,7 +16,7 @@ from TopicModeling.config import NUM_TOPICS
 from common.database import DataBase
 
 # Constansts
-MIN_PAPER_TOPIC_PROB_THRESHOLD = 1 / NUM_TOPICS
+MIN_PAPER_TOPIC_PROB_THRESHOLD = (1 / NUM_TOPICS) * 5
 
 # The files
 base_dir = os.path.join(os.path.dirname(__file__), 'modelfiles')
