@@ -35,7 +35,7 @@ import org.neo4j.shell.log.Logger;
 public class WebInfo {
 
     // Neo4j password, username is assumed to be the default (neo4j)
-    private static final String NEO4J_PASS = "****";
+    private static final String NEO4J_PASS = "neo4j";
     
     /**
      * Get all authors as a mapping from their id to their name
@@ -559,6 +559,15 @@ public class WebInfo {
     public static void createGraphWithReferenceRelations(String path) throws CommandException {
         createGraph(getAuthors(path), getPapersSQLite(path), getPaperAuthors(path));
         addPaperToPaperEdges(path);
+    }
+    
+    /**
+     * Executes {@link #createGraphWithReferenceRelations(java.lang.String)}
+     * 
+     * @param args none required
+     */
+    public static void main(String[] args) throws Exception {
+        createGraphWithReferenceRelations("path");
     }
     
 }
