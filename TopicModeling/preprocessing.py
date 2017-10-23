@@ -132,4 +132,4 @@ def get_from_file_or_build():
 
 
 def preproccess_author(name):
-	return re.sub('\s', '', name)
+	return re.sub('\W', '', name.lower())
