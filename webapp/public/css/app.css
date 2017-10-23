@@ -8396,13 +8396,13 @@ body {
   background: #e7e7e7;
 }
 
-.CoverContainer {
+.CoverInnerContainer {
   position: relative;
   height: 300px;
   overflow: hidden;
 }
 
-.CoverContainer .CoverImage {
+.CoverInnerContainer .CoverImage {
   position: absolute;
   -webkit-transform: translate(-50%, -50%);
           transform: translate(-50%, -50%);
@@ -8412,7 +8412,7 @@ body {
   width: 120%;
 }
 
-.CoverContainer .CoverOverlay {
+.CoverInnerContainer .CoverOverlay {
   background: rgba(0, 0, 0, 0.3);
   position: absolute;
   left: 0;
@@ -8449,6 +8449,10 @@ body {
           flex: 0 0 3rem;
 }
 
+.RelatedTopics {
+  margin-top: 2rem;
+}
+
 .TopInfoPanel {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -8463,10 +8467,6 @@ body {
 }
 
 .ResultCard {
-  padding: 0 1rem 2rem;
-}
-
-.ResultCard.ResultCardEntity {
   padding: 0 0 2rem;
 }
 

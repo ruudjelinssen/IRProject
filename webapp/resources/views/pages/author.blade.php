@@ -50,8 +50,8 @@
                 <h1 class="panel-heading">Found Related Authors</h1>
                 <div class="panel-body">
                     <ul>
-                        @foreach($titles as $title)
-                            <li><a href="/search?author={{$title}}">{{$title}}</a></li>
+                        @foreach($authors as $author)
+                            <li><a href="{{route('view author', $author['id'])}}?query_type=author_by&max_ref_count=2&entity_id={{$author['id']}}">{{$author['title']}}</a></li>
                         @endforeach
                     </ul>
                 </div>

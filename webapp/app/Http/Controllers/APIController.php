@@ -17,6 +17,7 @@ class APIController extends Controller{
     private $_single_topic_uri;
     private $_topics_of_paper_uri;
     private $_topics_of_author_uri;
+    private $_topics_search_uri;
 
     /**
      * APIController constructor.
@@ -39,6 +40,7 @@ class APIController extends Controller{
         $this->_single_topic_uri = 'http://127.0.0.1:5003/topic/';
         $this->_topics_of_paper_uri = 'http://127.0.0.1:5003/paper/';
         $this->_topics_of_author_uri = 'http://127.0.0.1:5003/author/';
+        $this->_topics_search_uri = 'http://127.0.0.1:5003/topics/search/';
     }
 
 	/**
@@ -78,11 +80,22 @@ class APIController extends Controller{
         $res = $this->_client->request('GET', $search_uri);
 	    $res_decoded = \GuzzleHttp\json_decode($res->getBody());
 
+	    // Get the related topics to this query
+
+	    $related_topics = [];
+
+	    if($request->query('query')){
+
+		    $res = $this->_client->request('GET', $this->_topics_search_uri . '?query=' . $request->query('query'));
+		    $related_topics = (\GuzzleHttp\json_decode($res->getBody()))->topics;
+	    }
+
         $query_model = new Query;
 
         return view('pages.search', [
         	'meta' => $res_decoded->meta,
             'results' => $res_decoded->results,
+            'related_topics' => $related_topics,
             'query' => $query_model
         ]);
     }
@@ -164,6 +177,7 @@ class APIController extends Controller{
 
 		$results = \GuzzleHttp\json_decode($res->getBody())->results;
 		$titles = [];
+		$authors = [];
 
 		foreach($results[0]->data as $result){
 			foreach($result->graph->nodes as $node){
@@ -171,6 +185,7 @@ class APIController extends Controller{
 				if($node->labels[0] == 'Author' && !in_array($node->properties->name, $titles)){
 
 					array_push($titles, $node->properties->name);
+					array_push($authors, ['title' => $node->properties->name, 'id' => $node->properties->a_id]);
 				}
 			}
 		}
@@ -184,7 +199,7 @@ class APIController extends Controller{
 			'query' => $query_model,
 			'paper_info' => $paper,
 			'json' => $res->getBody(),
-			'titles' => $titles,
+			'authors' => $authors,
 			'topics' => $topics
 		]);
 	}
@@ -232,6 +247,7 @@ class APIController extends Controller{
 
 		$results = \GuzzleHttp\json_decode($res->getBody())->results;
 		$titles = [];
+		$authors = [];
 
 		foreach($results[0]->data as $result){
 			foreach($result->graph->nodes as $node){
@@ -239,6 +255,7 @@ class APIController extends Controller{
 				if($node->labels[0] == 'Author' && !in_array($node->properties->name, $titles)){
 
 					array_push($titles, $node->properties->name);
+					array_push($authors, ['title' => $node->properties->name, 'id' => $node->properties->a_id]);
 				}
 			}
 		}
@@ -252,7 +269,7 @@ class APIController extends Controller{
 			'query' => $query_model,
 			'author_info' => $author,
 			'json' => $res->getBody(),
-			'titles' => $titles,
+			'authors' => $authors,
 			'topics' => $topics
 		]);
 	}

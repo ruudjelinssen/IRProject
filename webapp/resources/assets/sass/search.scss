@@ -1,4 +1,4 @@
-.CoverContainer{
+.CoverInnerContainer{
 	position: relative;
 	height: 300px;
 	overflow: hidden;
@@ -41,6 +41,10 @@
 	}
 }
 
+.RelatedTopics{
+	margin-top: 2rem;
+}
+
 .TopInfoPanel{
 	display: flex;
 	align-items: center;
@@ -49,11 +53,7 @@
 }
 
 .ResultCard{
-	padding: 0 1rem 2rem;
-
-	&.ResultCardEntity{
-		padding: 0 0 2rem;
-	}
+	padding: 0 0 2rem;
 
 	.QuickFacts{
 		margin-bottom: 0.5rem;
