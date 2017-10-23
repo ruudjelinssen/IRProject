@@ -106,7 +106,7 @@ class Search:
 
         result = {
             'meta': {'total': 1},
-            'results': author
+            'results': [author]
         }
 
         return result
@@ -187,6 +187,7 @@ class Search:
                 'event_type': doc.get('event_type'),
                 'pdf_name': doc.get('pdf_name'),
                 'abstract': doc.get('abstract'),
+                'paper_text': doc.get('paper_text'),
                 'highlight': fragment,
             }
 

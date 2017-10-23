@@ -1,0 +1,22 @@
+#HomeTron{
+	.AllTopicsList{
+		display: flex;
+		flex-wrap: wrap;
+		margin-bottom: 0;
+
+		.TopicName{
+			width: 25%;
+			border-radius: 0;
+
+			&:hover{
+				background-color: #bee5eb;
+				color: #0c5460;
+				cursor: pointer;
+			}
+		}
+	}
+
+	#SearchInput{
+		width: 400px;
+	}
+}

@@ -29,9 +29,11 @@
 	left: 50%;
 	display: flex;
 	width: 50%;
+	justify-content: center;
 
 	#SearchInput{
 		flex: 1;
+		width: 400px;
 	}
 
 	.SearchSubmit{
@@ -48,6 +50,10 @@
 
 .ResultCard{
 	padding: 0 1rem 2rem;
+
+	&.ResultCardEntity{
+		padding: 0 0 2rem;
+	}
 
 	.QuickFacts{
 		margin-bottom: 0.5rem;

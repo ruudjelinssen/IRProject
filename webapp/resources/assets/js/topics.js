@@ -1,51 +1,6 @@
 const topics = document.getElementsByClassName('js-topicName');
 const papers = document.getElementsByClassName('js-paperTitle');
 const authors = document.getElementsByClassName('js-authorTitle');
-const topicForm = document.getElementById('TopicForm');
-const topicNum = topicForm.getElementsByClassName('js-topicFormTopic')[0];
-const formPaperNum = topicForm.getElementsByClassName('js-topicFormPaperId')[0];
-const formAuthorNum = topicForm.getElementsByClassName('js-topicFormAuthorId')[0];
-const modalTopicNames = document.getElementsByClassName('js-modalTopicNames');
-
-Array.from(modalTopicNames).forEach(topic => {
-
-	topic.addEventListener('click', () => {
-
-		topicNum.value = topic.dataset.topicId;
-		formPaperNum.value = '';
-		formAuthorNum.value = '';
-		topicForm.submit();
-	});
-});
-
-Array.from(topics).forEach(topic => {
-
-	topic.addEventListener('click', () => {
-
-		topicNum.value = topic.dataset.topicId;
-		formPaperNum.value = '';
-		topicForm.submit();
-	})
-});
-
-Array.from(papers).forEach(paper => {
-
-	paper.addEventListener('click', () => {
-
-		formPaperNum.value = paper.dataset.paperId;
-		topicForm.submit();
-	})
-});
-
-Array.from(authors).forEach(author => {
-
-	author.addEventListener('click', () => {
-
-		formAuthorNum.value = author.dataset.authorId;
-		formPaperNum.value = '';
-		topicForm.submit();
-	})
-});
 
 const nextPaperButton = document.querySelector('.js-nextPaperButton');
 
@@ -163,28 +118,4 @@ if(nextPaperButton !== null){
 			previousAuthorButton.disabled = true;
 		}
 	});
-}
-
-const allTopicsButton = document.querySelector('.js-showAllTopics');
-
-if(allTopicsButton !== null){
-
-	allTopicsButton.addEventListener('click', () => {
-		formAuthorNum.value = '';
-		formPaperNum.value = '';
-		topicForm.submit();
-	});
-}
-
-
-const paperModal = document.getElementById('PaperModal');
-
-if(paperModal){
-
-	$('#PaperModal').modal('show');
-
-	$('#PaperModal').on('hide.bs.modal', function (e) {
-		formPaperNum.value = '';
-		topicForm.submit();
-	})
 }

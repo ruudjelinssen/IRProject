@@ -8364,14 +8364,12 @@ body {
   margin: 0;
 }
 
-#app .sidebar-wrapper {
-  position: fixed;
-  background: black;
-  color: white;
-  padding: 0 1rem;
-  height: 100vh;
-  left: 0;
-  top: 0;
+#app {
+  margin-top: 50px;
+}
+
+#app .main-wrapper {
+  margin-top: 2rem;
 }
 
 .panel-heading {
@@ -8380,6 +8378,8 @@ body {
 }
 
 .PaperTitle {
+  display: block;
+  width: 100%;
   color: #0098b1;
   cursor: pointer;
   overflow: hidden;
@@ -8391,16 +8391,9 @@ body {
   text-decoration: underline;
 }
 
-#Sidebar {
-  text-transform: capitalize;
-}
-
-#Sidebar .ProjectTitle {
-  margin-left: 1.5rem;
-}
-
-#Sidebar .NavLink.is-active {
-  background: #eeeeee;
+#MainNavBar .NavLink.is-active {
+  color: #555;
+  background: #e7e7e7;
 }
 
 .CoverContainer {
@@ -8438,12 +8431,16 @@ body {
   display: -ms-flexbox;
   display: flex;
   width: 50%;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
 }
 
 #SearchForm #SearchInput {
   -webkit-box-flex: 1;
       -ms-flex: 1;
           flex: 1;
+  width: 400px;
 }
 
 #SearchForm .SearchSubmit {
@@ -8469,6 +8466,10 @@ body {
   padding: 0 1rem 2rem;
 }
 
+.ResultCard.ResultCardEntity {
+  padding: 0 0 2rem;
+}
+
 .ResultCard .QuickFacts {
   margin-bottom: 0.5rem;
 }
@@ -8492,12 +8493,8 @@ body {
 }
 
 #Graph {
-  position: fixed;
-  top: calc(50px + 1rem);
-  bottom: 1rem;
-  right: calc(25% + 1rem);
-  left: calc(25% + 1rem);
-  margin: auto;
+  width: 100%;
+  height: 600px;
 }
 
 #Graph .link {
@@ -8509,7 +8506,6 @@ body {
 #NavBar {
   min-height: 0;
   padding: 1rem 0;
-  left: calc(25% + 1.5rem);
 }
 
 #NavBar.navbar-default {
@@ -8523,10 +8519,6 @@ body {
 
 #UnavailableContainer {
   margin-top: calc(50px + 3rem);
-}
-
-#TopicsContainer {
-  margin-top: 2rem;
 }
 
 #TopicsContainer .AvailableTopicsList {
@@ -8551,10 +8543,6 @@ body {
   cursor: pointer;
 }
 
-#TopicsContainer .TopicsContainerTitle {
-  margin-top: 1rem;
-}
-
 #TopicsContainer .VisButton {
   position: absolute;
   right: 1rem;
@@ -8574,9 +8562,47 @@ body {
 }
 
 #LDAVisualisation {
-  position: fixed;
-  right: 0;
-  width: 75%;
-  height: 100vh;
+  position: relative;
+  border: none;
+  width: 100%;
+  height: 900px;
+}
+
+.EvolutionVisualisation {
+  width: 100%;
+  height: 630px;
+  margin: 1rem 0;
+  border: none;
+}
+
+.TopicAuthorEvolutionVisualisation {
+  width: 100%;
+  height: 1000px;
+  margin: 1rem 0;
+  border: none;
+}
+
+#HomeTron .AllTopicsList {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+#HomeTron .AllTopicsList .TopicName {
+  width: 25%;
+  border-radius: 0;
+}
+
+#HomeTron .AllTopicsList .TopicName:hover {
+  background-color: #bee5eb;
+  color: #0c5460;
+  cursor: pointer;
+}
+
+#HomeTron #SearchInput {
+  width: 400px;
 }
 

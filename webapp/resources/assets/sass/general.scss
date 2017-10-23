@@ -8,17 +8,10 @@ html, body {
 }
 
 #app{
-	.sidebar-wrapper{
-		position: fixed;
-		background: black;
-		color: white;
-		padding: 0 1rem;
-		height: 100vh;
-		left:0;
-		top:0;
-	}
+	margin-top: 50px;
 
 	.main-wrapper{
+		margin-top: 2rem;
 	}
 }
 
@@ -28,6 +21,8 @@ html, body {
 }
 
 .PaperTitle{
+	display: block;
+	width: 100%;
 	color: #0098b1;
 	cursor: pointer;
 	overflow: hidden;

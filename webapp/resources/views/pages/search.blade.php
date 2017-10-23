@@ -12,10 +12,12 @@
             <img class="CoverImage" src="{{asset('images/papers.jpg')}}">
             <div class="CoverOverlay"></div>
 
-            {{ Form::model($query, ['method' => 'get', 'id' => 'SearchForm'])}}
+            {{ Form::model($query, ['method' => 'get', 'id' => 'SearchForm', 'class' => 'form-inline text-center'])}}
+                <div class="form-group">
 
-                {{Form::text('query', '', ['id' => 'SearchInput', 'placeholder' => 'Search for papers, authors, years, and more..'])}}
-                {{Form::submit('Search', ['class' => 'btn btn-default SearchSubmit'])}}
+                    {{Form::text('query', '', ['id' => 'SearchInput', 'class' => 'form-control', 'placeholder' => 'Search for papers, authors, years, and more..'])}}
+                    {{Form::submit('Search', ['class' => 'btn btn-default SearchSubmit'])}}
+                </div>
 
             {{Form::close()}}
         </div>
@@ -43,7 +45,7 @@
         <div class="col-xs-8">
             <section class="ResultCard">
                 <h1 class="ResultTitle">
-                    <a href="/clustering?query_type=paper_by&entity_id={{$result->id}}&max_ref_count=2">{{$result->title}}</a>
+                    <a href="{{route('view paper', $result->id)}}?query_type=paper_by&max_ref_count=2&entity_id={{$result->id}}">{{$result->title}}</a>
                 </h1>
                 <div class="QuickFacts">
                     @if($result->year)
@@ -59,7 +61,7 @@
                 <ul class="AuthorList">
                     @foreach($result->authors as $author)
                         <li class="QuickFact">
-                            <a href="/clustering?query_type=author_by&entity_id={{$author->id}}&max_ref_count=2">{{$author->title}}</a>
+                            <a href="{{route('view author', $author->id)}}?query_type=author_by&max_ref_count=2&entity_id={{$author->id}}">{{$author->title}}</a>
                         </li>
                     @endforeach
                 </ul>
@@ -68,39 +70,6 @@
             </section>
         </div>
         @endforeach
-
-        {{--<div class="col-xs-12">--}}
-            {{--<div class="DesktopOnlyBlock ResultsNum">--}}
-                {{--Showing {{$meta->start}} - {{$meta->end}} of {{$meta->total}}--}}
-            {{--</div>--}}
-
-            {{--<ul class="Paging">--}}
-
-                {{--@if($show_first == true)--}}
-
-                {{--<li class="Left">--}}
-                    {{--<button value="{{$first_start}}">{{$first_number}}</button>--}}
-                {{--</li>--}}
-                {{--@endif--}}
-
-                {{--@if($show_left_spacer == true)--}}
-                {{--<li class="Left Spacer">&middot;&middot;&middot;</li>--}}
-                {{--@endif--}}
-
-                {{--[{loop Pages}]--}}
-                {{--<li class="Left ">--}}
-                    {{--<button class="[{if selected is true}]CurrentPage[{if selected end}] [{if four_digits is true}] FourDigits[{if four_digits end}]" value="[{var start}]">[{var page}]</button>--}}
-                {{--</li>--}}
-                {{--[{loop Pages end}]--}}
-
-                {{--<li class="Left">--}}
-                    {{--<button value="[{var next_start}]" class="NextPage TextNav" [{if enable_next is false}]disabled[{if enable_next end}]>--}}
-                        {{--Next--}}
-                        {{--<i class="lnr-chevron-right ArrowIcon"></i>--}}
-                    {{--</button>--}}
-                {{--</li>--}}
-            {{--</ul>--}}
-        {{--</div>--}}
     </div>
 
 @endsection

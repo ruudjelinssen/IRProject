@@ -7,10 +7,8 @@
 <div id="app">
     <div class="container-fluid">
         <div class="row">
-            <nav class="col-xs-3 sidebar-wrapper">
-                @include('includes.sidebar')
-            </nav>
-            <main class="col-xs-9 col-xs-offset-3 main-wrapper">
+            @include('includes.sidebar')
+            <main class="col-xs-10 col-xs-offset-1 main-wrapper">
                 @yield('page-template')
             </main>
         </div>

@@ -1,13 +1,6 @@
-#Sidebar{
-	text-transform: capitalize;
-
-	.ProjectTitle{
-		margin-left: 1.5rem;
-	}
-
-	.NavLink{
-		&.is-active{
-			background: #eeeeee;
-		}
+#MainNavBar{
+	.NavLink.is-active{
+		color: #555;
+		background: #e7e7e7;
 	}
 }

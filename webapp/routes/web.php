@@ -11,22 +11,32 @@
 |
 */
 
+Route::any('/', [
+	'as' => 'home',
+	'uses' => 'APIController@showHome',
+]);
+
 Route::any('/search', [
-    'as' => 'search',
+    'as' => 'explore by search',
     'uses' => 'APIController@showSearch',
 ]);
 
-Route::any('/clustering', [
-	'as' => 'clustering',
-	'uses' => 'APIController@showClusters',
+Route::any('/topics/{topicID?}', [
+	'as' => 'explore by topic',
+	'uses' => 'APIController@showTopics',
 ]);
 
 Route::any('/topic-visualisation', [
 	'as' => 'topic visualisation',
-	'uses' => 'APIController@showEvolution',
+	'uses' => 'APIController@showLDA',
 ]);
 
-Route::any('/topics', [
-	'as' => 'topics',
-	'uses' => 'APIController@showTopics',
+Route::any('/paper/{paperID?}', [
+	'as' => 'view paper',
+	'uses' => 'APIController@showPaper',
+]);
+
+Route::any('/author/{authorID?}', [
+	'as' => 'view author',
+	'uses' => 'APIController@showAuthor',
 ]);

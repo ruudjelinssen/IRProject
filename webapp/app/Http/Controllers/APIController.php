@@ -11,6 +11,12 @@ class APIController extends Controller{
 
     private $_client;
     private $_query_types;
+    private $_search_uri;
+    private $_author_search_uri;
+    private $_all_topics_uri;
+    private $_single_topic_uri;
+    private $_topics_of_paper_uri;
+    private $_topics_of_author_uri;
 
     /**
      * APIController constructor.
@@ -27,7 +33,31 @@ class APIController extends Controller{
         	'cluster_paper' => "MATCH (a1:Author)-[w1:Wrote]-(p1:Paper)-[r1:ReferencedIn*0..&&&&]-(p0:Paper {p_id: %%%})-[w0:Wrote]-(a0:Author) RETURN r1,w1,w0,a0,a1,p0,p1",
         	'cluster_author' => "MATCH (a1:Author)-[r1:Wrote]-(p1:Paper)-[r2:ReferencedIn*0..&&&&]-(p0:Paper)-[r0:Wrote]-(a0:Author {a_id: %%%}) RETURN r1,r2,r0,a0,a1,p0,p1",
         ];
+        $this->_search_uri = 'http://127.0.0.1:5002/papers';
+        $this->_author_search_uri = 'http://127.0.0.1:5002/authors';
+        $this->_all_topics_uri = 'http://127.0.0.1:5003/topics/';
+        $this->_single_topic_uri = 'http://127.0.0.1:5003/topic/';
+        $this->_topics_of_paper_uri = 'http://127.0.0.1:5003/paper/';
+        $this->_topics_of_author_uri = 'http://127.0.0.1:5003/author/';
     }
+
+	/**
+	 * Retrieve evolution data
+	 *
+	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+	 */
+
+	public function showHome(){
+
+		$res = $this->_client->request('GET', $this->_all_topics_uri);
+		$all_topics = (\GuzzleHttp\json_decode($res->getBody()))->topics;
+		$query_model = new Query;
+
+		return view('pages.home', [
+			'query' => $query_model,
+			'all_topics' => $all_topics
+		]);
+	}
 
     /**
      * Retrieve search data for the given query parameters
@@ -38,7 +68,7 @@ class APIController extends Controller{
 
     public function showSearch(Request $request){
 
-        $search_uri = 'http://127.0.0.1:5002/papers?';
+        $search_uri = $this->_search_uri . '?';
 
         foreach($request->query() as $key => $value){
 
@@ -57,63 +87,60 @@ class APIController extends Controller{
         ]);
     }
 
-    private function _getPaper($id){
-
-	    $search_uri = 'http://127.0.0.1:5002/papers?id=' . $id;
-
-	    $res = $this->_client->request('GET', $search_uri);
-	    $res_decoded = \GuzzleHttp\json_decode($res->getBody());
-
-	    return $res_decoded->results[0];
-    }
-
-	private function _getAuthor($id){
-
-		$search_uri = 'http://127.0.0.1:5002/authors?id=' . $id;
-
-		$res = $this->_client->request('GET', $search_uri);
-		$res_decoded = \GuzzleHttp\json_decode($res->getBody());
-
-		return $res_decoded->result;
-	}
-
 	/**
-	 * Retrieve cluster data
+	 * Retrieve data for 1 particular topic
 	 *
-	 * @param Request $request
+	 * @param integer $topicID
 	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
 	 */
 
-	public function showClusters(Request $request){
+	public function showTopics($topicID){
 
-		$query_type = $request->query('query_type');
-		$entity_id = $request->query('entity_id');
-		$max_ref_count = $request->query('max_ref_count');
+		// Get the information for the topic with the specified ID
+
+		$res = $this->_client->request('GET', $this->_single_topic_uri . $topicID);
+		$topic_info = \GuzzleHttp\json_decode($res->getBody());
 
 		$query_model = new Query;
 
-		if(!$query_type || !$entity_id || !$max_ref_count){
+		return view('pages.topics', [
+			'query' => $query_model,
+			'topic_info' => $topic_info,
+			'topic_id' => $topicID
+		]);
+	}
 
-			return view('pages.clustering', [
-				'valid' => false,
-				'json' => "",
-				'query' => $query_model
-			]);
-		}
+	/**
+	 * Show LDA view
+	 *
+	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+	 */
 
-		if($query_type % 2 == 0){
+	public function showLDA(){
 
-			$entity_type = 'paper';
-			$root = $this->_getPaper($entity_id);
-		}
-		else{
+		return view('pages.topicviz');
+	}
 
-			$entity_type = 'author';
-			$root = $this->_getAuthor($entity_id);
-		}
+	/**
+	 * Retrieve evolution data
+	 *
+	 * @param Request $request
+	 * @param integer $paperID
+	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+	 */
+
+	public function showPaper(Request $request, $paperID = 6117){
+
+		$query_type = $request->query('query_type');
+		$max_ref_count = $request->query('max_ref_count');
+
+		$res = $this->_client->request('GET', $this->_search_uri . '?id=' . $paperID);
+		$paper = ((\GuzzleHttp\json_decode($res->getBody()))->results)[0];
+
+		$query_model = new Query;
 
 		$statement = $this->_query_types[$query_type];
-		$statement = str_replace('%%%', $entity_id, $statement);
+		$statement = str_replace('%%%', $paperID, $statement);
 		$statement = str_replace('&&&&', $max_ref_count, $statement);
 
 		$query = [
@@ -125,16 +152,11 @@ class APIController extends Controller{
 			]
 		];
 
-		$headers = [
-			'Accept' => 'application/json',
-		];
-
 		$uri = 'http://localhost:7474/db/data/transaction/commit';
 
 		$client = new Client();
 
 		$res = $client->post($uri, [
-			'headers' => $headers,
 			'json' => $query
 		]);
 
@@ -153,13 +175,17 @@ class APIController extends Controller{
 			}
 		}
 
-		return view('pages.clustering', [
-			'valid' => true,
+		// Get the topics related to this paper
+
+		$topics_res = $this->_client->request('GET', $this->_topics_of_paper_uri . $paperID);
+		$topics = (\GuzzleHttp\json_decode($topics_res->getBody()))->topics;
+
+		return view('pages.paper', [
+			'query' => $query_model,
+			'paper_info' => $paper,
 			'json' => $res->getBody(),
 			'titles' => $titles,
-			'root' => $root,
-			'entity_type' => $entity_type,
-			'query' => $query_model
+			'topics' => $topics
 		]);
 	}
 
@@ -167,93 +193,67 @@ class APIController extends Controller{
 	 * Retrieve evolution data
 	 *
 	 * @param Request $request
+	 * @param integer $authorID
 	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
 	 */
 
-	public function showEvolution(Request $request){
+	public function showAuthor(Request $request, $authorID = 6117){
 
-		$search_uri = 'http://127.0.0.1:5002/papers?';
+		$query_type = $request->query('query_type');
+		$max_ref_count = $request->query('max_ref_count');
 
-		foreach($request->query() as $key => $value){
-
-			$search_uri = $search_uri . $key . '=' . $value . '&';
-		}
-
-		$res = $this->_client->request('GET', $search_uri);
-		$res_decoded = \GuzzleHttp\json_decode($res->getBody());
+		$res = $this->_client->request('GET', $this->_author_search_uri . '?id='. $authorID);
+		$author = ((\GuzzleHttp\json_decode($res->getBody()))->results)[0];
 
 		$query_model = new Query;
 
-		return view('pages.topicviz', [
-			'query' => $query_model
-		]);
-	}
+		$statement = $this->_query_types[$query_type];
+		$statement = str_replace('%%%', $authorID, $statement);
+		$statement = str_replace('&&&&', $max_ref_count, $statement);
 
-
-	/**
-	 * Retrieve evolution data
-	 *
-	 * @param Request $request
-	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-	 */
-
-	public function showTopics(Request $request){
-
-		$all_topics_uri = 'http://127.0.0.1:5003/topics/';
-		$single_topic_uri = 'http://127.0.0.1:5003/topic/';
-		$single_paper_uri = 'http://127.0.0.1:5002/papers?id=';
-		$single_paper_topic_uri = 'http://127.0.0.1:5003/paper/';
-		$single_author_uri = 'http://127.0.0.1:5003/author/';
-
-		$topic_id = $request->query('topic_id');
-		$topic_info = null;
-
-		if(($topic_id || $topic_id == 0) && $topic_id != ''){
-
-			$res = $this->_client->request('GET', $single_topic_uri . $topic_id);
-			$topic_info = \GuzzleHttp\json_decode($res->getBody());
-		}
-
-		$paper_id = $request->query('paper_id');
-		$paper_info = null;
-		$paper_topics = null;
-
-		if($paper_id){
-
-			$res = $this->_client->request('GET', $single_paper_uri . $paper_id);
-			$paper_info = (\GuzzleHttp\json_decode($res->getBody())->results)[0];
-			$res = $this->_client->request('GET', $single_paper_topic_uri . $paper_id);
-			$paper_topics = (\GuzzleHttp\json_decode($res->getBody()))->topics;
-		}
-
-		$author_id = $request->query('author_id');
-		$author_info = null;
-
-		if($author_id){
-
-			$res = $this->_client->request('GET', $single_author_uri . $author_id);
-			$res_decoded = (\GuzzleHttp\json_decode($res->getBody()))->topics;
-			$author_name = (\GuzzleHttp\json_decode($res->getBody()))->name;
-		}
-		else{
-
-			$res = $this->_client->request('GET', $all_topics_uri);
-			$res_decoded = (\GuzzleHttp\json_decode($res->getBody()))->topics;
-			$author_name = '';
-		}
-
-		$query_model = new Query;
-
-		return view('pages.topics', [
-			'query' => $query_model,
-			'all_topics' => $res_decoded,
-			'topic_info' => $topic_info,
-			'paper_info' => $paper_info,
-			'paper_topics' => $paper_topics,
-			'author_name' => $author_name,
-			'query_info' => [
-				'topic_id' => $topic_id
+		$query = [
+			"statements" => [
+				[
+					"statement" => $statement,
+					"resultDataContents" => ["graph"]
+				]
 			]
+		];
+
+		$uri = 'http://localhost:7474/db/data/transaction/commit';
+
+		$client = new Client();
+
+		$res = $client->post($uri, [
+			'json' => $query
+		]);
+
+		// Get the entity titles from the result
+
+		$results = \GuzzleHttp\json_decode($res->getBody())->results;
+		$titles = [];
+
+		foreach($results[0]->data as $result){
+			foreach($result->graph->nodes as $node){
+
+				if($node->labels[0] == 'Author' && !in_array($node->properties->name, $titles)){
+
+					array_push($titles, $node->properties->name);
+				}
+			}
+		}
+
+		// Get the topics related to this author
+
+		$topics_res = $this->_client->request('GET', $this->_topics_of_author_uri . $authorID);
+		$topics = (\GuzzleHttp\json_decode($topics_res->getBody()))->topics;
+
+		return view('pages.author', [
+			'query' => $query_model,
+			'author_info' => $author,
+			'json' => $res->getBody(),
+			'titles' => $titles,
+			'topics' => $topics
 		]);
 	}
 }

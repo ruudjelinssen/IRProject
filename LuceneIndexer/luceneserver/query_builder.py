@@ -114,6 +114,8 @@ class QueryBuilder(object):
             has_constructs = True
 
         if has_constructs is False:
+            self.__construct_field('paper_title', query_string, False, False, boost=7.0)
+            self.__construct_field('paper_title', query_string, True, False, boost=10.0)
             self.__construct_field('content', query_string, False, False)
             self.__construct_field('content', query_string, True, False)
 
