@@ -19,7 +19,13 @@ import java.util.regex.Pattern;
  */
 public class FilterReferences {
 
-    public List<Map.Entry<Integer, Integer>> filter(Map<Integer, String[]> references, Map<Integer, String> authors) {
+    /**
+     * Matches author to papers it is referenced in
+     * @param references paper information with reference blocks
+     * @param authors Author information
+     * @return List of author-paper edges
+     */
+    public List<Map.Entry<Integer, Integer>> matchAuthor(Map<Integer, String[]> references, Map<Integer, String> authors) {
         //For each author, find occurrences in references of all papers
         List<Map.Entry<Integer, Integer>> results = new ArrayList();
         int i = 0;
@@ -45,6 +51,12 @@ public class FilterReferences {
         return results;
     }
     
+    /**
+     * Auxilary function to check which authors a paper is referenced in
+     * @param relations List of author-paper relations
+     * @param references paper information with reference block
+     * @param author author information for specific author
+     */
     public void checkResults(List<Map.Entry<Integer, Integer>> relations, Map<Integer, String[]> references, Map.Entry<Integer, String> author) {
         System.out.println(author.getValue() + " occurs in the following references: ");
         for (Entry<Integer, Integer> rel : relations) {
@@ -53,18 +65,11 @@ public class FilterReferences {
             }
         }
     }
-    
+        
     /**
-     * Use paper->author relation to figure out the references to other papers from a paper
-     * @return 
-     */
-    public List<Map.Entry<Integer, Integer>> paperToPaper(Map<Integer, String[]> references, Map<Integer, String> authors){
-        //From paper->author relation, check all papers that author made, and try to find its title in reference block
-        return null;
-    }
-    
-    /**
-     * Normalize reference block to set of words, remove all punctuation
+     * Removes interpunction, changes to lowercase and splits into array of words
+     * @param references paper information with reference block
+     * @return  array of normalized words from reference block for each paper
      */
     public static Map<Integer, String[]> normalizeReferences(Map<Integer, String[]> references){
         Map<Integer, String[]> results = new HashMap();
@@ -75,7 +80,9 @@ public class FilterReferences {
     }
 
     /**
-     * Normalize titles to set of words, remove all punctuation
+     * Removes interpunction and changes paper title to lowercase
+     * @param references paper information with reference block
+     * @return array of normalized words for title for each paper
      */
     public static Map<Integer, String[]> normalizeTitles(Map<Integer, String[]> references){
         Map<Integer, String[]> results = new HashMap();
@@ -86,6 +93,13 @@ public class FilterReferences {
         return results;
     }
     
+    /**
+     * Relates references from papers to other papers when it can match at least all but 2 words from title
+     * 
+     * @param titles Normalized paper titles
+     * @param refBlocks Normalized reference blocks
+     * @return matches paperId, list of papers that reference it
+     */
     public static Map<Integer, List<Integer>> potentialMatches(Map<Integer, String[]> titles, Map<Integer, String[]> refBlocks){
         Map<Integer, List<Integer>> results = new HashMap();
         for(Entry<Integer, String[]> titleEntry : titles.entrySet()){
@@ -99,9 +113,23 @@ public class FilterReferences {
                 }
             }
         }
+        int resultAmount = 0;
+        for(Entry<Integer, List<Integer>> matching : results.entrySet()){
+            resultAmount += matching.getValue().size();
+        }
+        System.out.println("Potential matches: ");
+        System.out.println(results.entrySet().size()+" papers with a reference to it");
+        System.out.println(resultAmount+" total relations");
         return results;
     }
     
+    /**
+     * Counts words from title that occur in a reference block, if all but at most 2 are matched, returns true
+     * 
+     * @param title normalized title for each paper
+     * @param refBlock normalized reference block for each paper
+     * @return true when at most 2 words can't be matched
+     */
     public static boolean isMatch(Entry<Integer, String[]> title, Entry<Integer, String[]> refBlock){
         if(title.getKey() == refBlock.getKey()){
             return false;
@@ -148,12 +176,24 @@ public class FilterReferences {
         return false;
     }
     
+    /**
+     * Cleans up a string by removing interpuction and double spaces
+     * 
+     * @param refBlock
+     * @return 
+     */
     private static String removeInterpunction(String refBlock) {
         refBlock = refBlock.replaceAll("\\(|\\)", " ");
         refBlock = refBlock.replaceAll("\\.|;|:|,|!|\t|\n|\"","");
         return refBlock.replaceAll("\\s\\s", " ");
     }
     
+    /**
+     * Relates references from papers to other papers when it can match 2 adjacent words that are the same
+     * 
+     * @param references paper information with reference block
+     * @return matches paperId, list of papers that reference it
+     */
     public static Map<Integer, List<Integer>> reduceMatches(Map<Integer, String[]> references){
         Map<Integer, String[]> normalizedTitles = normalizeTitles(references);
         Map<Integer, String[]> normalizedReferences = normalizeReferences(references);       
@@ -172,11 +212,24 @@ public class FilterReferences {
                 }
             }
         }
-        
+        int resultAmount = 0;
+        for(Entry<Integer, List<Integer>> matching : goodMatches.entrySet()){
+            resultAmount += matching.getValue().size();
+        }
+        System.out.println("Reduced matches: ");
+        System.out.println(goodMatches.entrySet().size()+" papers with a reference to it");
+        System.out.println(resultAmount+" total relations");
         return goodMatches;
         //
     }
-        
+
+    /**
+     * Matches 2 adjacent words in a title to 2 adjacent words in a reference block
+     * 
+     * @param title normalized title for each paper
+     * @param refBlock normalized reference block for each paper
+     * @return true when adjacent words are identical
+     */
     private static boolean isGoodMatch(String[] title, String[] referenceBlock){
         if (title.length > 2) {
             for (int i = 0; i < title.length; i++) {
@@ -198,7 +251,14 @@ public class FilterReferences {
         }
         return false;
     }
-    
+
+    /**
+     * Relates references from papers to other papers when it can match all words in a title to a reference
+     * with correct order while allowing Lehvenstein distance of 2 per word
+     * 
+     * @param references paper information with reference block
+     * @return matches paperId, list of papers that reference it
+     */    
     public static Map<Integer, List<Integer>> exactMatches(Map<Integer, String[]> references){
         Map<Integer, String[]> normalizedTitles = normalizeTitles(references);
         Map<Integer, String[]> normalizedReferences = normalizeReferences(references);       
@@ -217,11 +277,23 @@ public class FilterReferences {
                 }
             }
         }
-        
+        int resultAmount = 0;
+        for(Entry<Integer, List<Integer>> matching : exactMatches.entrySet()){
+            resultAmount += matching.getValue().size();
+        }
+        System.out.println("Exact matches: ");
+        System.out.println(exactMatches.entrySet().size()+" papers with a reference to it");
+        System.out.println(resultAmount+" total relations");
         return exactMatches;
-        //
     }
-        
+
+    /**
+     * Matches all words in a title to the reference block in same order, allowing Lehvenstein distance of 2 for all but 2 words in title
+     * 
+     * @param title normalized title for each paper
+     * @param refBlock normalized reference block for each paper
+     * @return true when all words match closely enough in same order
+     */
     private static boolean isExactMatch(String[] title, String[] referenceBlock){
         if (title.length > 2) {
             for (int i = 0; i < title.length; i++) {
@@ -246,13 +318,14 @@ public class FilterReferences {
 
     
     /**
+     * Checks if 2 adjacent words can be used to match rest of the words in the title to the reference block
      * 
      * @param i index of a match in title
      * @param j index of a match in ref
      * @param k offset between 2 matches
-     * @param title
-     * @param referenceBlock
-     * @return 
+     * @param title normalized title for each paper
+     * @param refBlock normalized reference block for each paper
+     * @return true when all words can be matched closely
      */
     private static boolean indexMatch(int i, int j, int k, String[] title, String[] referenceBlock){
         //For each word in title with > 3 (not i, i+k)
@@ -282,8 +355,8 @@ public class FilterReferences {
     
     /**
      * Given an exact paper-paper match, check if author also appears
-     * @param references
-     * @return 
+     * @param references paper information with reference block
+     * @return matches paperId, list of papers that reference it
      */
     public static Map<Integer, List<Integer>> authorAndPaperMatch(Map<Integer, String[]> references){
         Map<Integer, List<Integer>> matches = exactMatches(references);
@@ -300,11 +373,23 @@ public class FilterReferences {
                 }
             }
         }
-
+        int resultAmount = 0;
+        for(Entry<Integer, List<Integer>> matching : results.entrySet()){
+            resultAmount += matching.getValue().size();
+        }
+        System.out.println("Exact matches with author: ");
+        System.out.println(results.entrySet().size()+" papers with a reference to it");
+        System.out.println(resultAmount+" total relations");
         
         return results;
     }
     
+    /**
+     * Checks whether author's last name appears in a reference block
+     * @param authors authors of a paper
+     * @param referenceBlock normalized reference block for each paper
+     * @return 
+     */
     private static boolean isAuthorExtactMatch(String authors, String[] referenceBlock) {
         Levenshtein l = new Levenshtein();
         //Split authors
@@ -320,7 +405,6 @@ public class FilterReferences {
                 }
             }
         }
-        //Find their last name in referenceblock
         return false;
     }
     
@@ -334,6 +418,11 @@ public class FilterReferences {
         return;
     }
     
+    /**
+     * Lists matches for a specific paper
+     * @param references
+     * @param matches 
+     */
     public static void checkResult(Map<Integer, String[]> references, Map<Integer, List<Integer>> matches){
         List<String> matchList = new ArrayList();
         int paperId = 3107;
