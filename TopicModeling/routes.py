@@ -320,7 +320,9 @@ class TopicAuthorEvolution(View):
 			for year, score in enumerate(top_authors_year_prob[:, index]):
 				points_x.append(year + 1987)
 				points_y.append(index + 1)
-				sizes.append(score * NUM_TOPICS * 2)
+				modified_score = score * NUM_TOPICS * 100
+				sizes.append(modified_score)
+		sizes = [x / max(sizes) * 50 for x in sizes]
 		p.circle(points_x, points_y, size=sizes, color='#4e88e5', alpha=0.65)
 
 		p.outline_line_color = None
@@ -388,7 +390,9 @@ class AuthorTopicEvolution(View):
 				for year, score in enumerate(top_topics_year_prob[:, index]):
 					points_x.append(year + 1987)
 					points_y.append(index + 1)
-					sizes.append(score * NUM_TOPICS * 2)
+					modified_score = score * NUM_TOPICS * 100
+					sizes.append(modified_score)
+			sizes = [x / max(sizes) * 50 for x in sizes]
 			p.circle(points_x, points_y, size=sizes, color='#4e88e5', alpha=0.65)
 
 			p.outline_line_color = None
