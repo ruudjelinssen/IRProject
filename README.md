@@ -15,3 +15,10 @@
 - Run Neo4j
 - Execute WebInfo.java to created the graph database
 - Once the Java code is finished executing, Neo4j should be running for API access
+
+# Topic modeling
+## Running the code`
+ - Install all the packages in `requirements.txt` using `pip install -r TopicModeling/requirements.txt
+ - Run `topics_entry.py`
+ - It will build all the models needed for the application to work.
+ - If you want to rebuild a model, you'll have to remove the model file in the `TopicModeling/modelfiles` directory.
