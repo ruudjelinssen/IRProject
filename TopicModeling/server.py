@@ -75,6 +75,7 @@ class TopicsServer:
 
 	def prepare_visualizations(self):
 		"""Prepare LDA visualization."""
+		logging.info("Preparing LDA visualization.")
 		vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.dictionary, sort_topics=False)
 		self.lda_visualization_html = pyLDAvis.prepared_data_to_html(vis)
 
