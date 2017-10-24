@@ -96,17 +96,22 @@ class QueryBuilder(object):
         splits = self.__find_splits(query_string)
 
         if self.constructs[0] in splits:
-            self.__construct_field('author', splits[self.constructs[0]])
+            self.boolean_query_builder = self.__construct_field('author', splits[self.constructs[0]], False, True, boost=1.0, builder=self.boolean_query_builder)
             has_constructs = True
 
         if self.constructs[1] in splits:
 
-            self.__construct_field('paper_title', splits[self.constructs[1]], False, False, boost=3.0)
-            self.__construct_field('paper_title', splits[self.constructs[1]], True, False, boost=4.0)
-            self.__construct_field('abstract', splits[self.constructs[1]], False, False, boost=1.2)
-            self.__construct_field('abstract', splits[self.constructs[1]], True, False, boost=1.4)
-            self.__construct_field('paper_text', splits[self.constructs[1]], False, False, boost=1.0)
-            self.__construct_field('paper_text', splits[self.constructs[1]], True, False, boost=1.0)
+            construct_builder = BooleanQuery.Builder()
+
+            construct_builder = self.__construct_field('paper_title', splits[self.constructs[1]], False, False, boost=7.0, builder=construct_builder)
+            construct_builder = self.__construct_field('paper_title', splits[self.constructs[1]], True, False, boost=10.0, builder=construct_builder)
+            construct_builder = self.__construct_field('abstract', splits[self.constructs[1]], False, False, boost=1.2, builder=construct_builder)
+            construct_builder = self.__construct_field('abstract', splits[self.constructs[1]], True, False, boost=1.4, builder=construct_builder)
+            construct_builder = self.__construct_field('paper_text', splits[self.constructs[1]], False, False, boost=1.0, builder=construct_builder)
+            construct_builder = self.__construct_field('paper_text', splits[self.constructs[1]], True, False, boost=1.0, builder=construct_builder)
+
+            self.boolean_query_builder.add(construct_builder.build(), BooleanClause.Occur.MUST)
+
             has_constructs = True
 
         if self.constructs[2] in splits:
@@ -114,10 +119,10 @@ class QueryBuilder(object):
             has_constructs = True
 
         if has_constructs is False:
-            self.__construct_field('paper_title', query_string, False, False, boost=7.0)
-            self.__construct_field('paper_title', query_string, True, False, boost=10.0)
-            self.__construct_field('content', query_string, False, False)
-            self.__construct_field('content', query_string, True, False)
+            self.boolean_query_builder = self.__construct_field('paper_title', query_string, False, False, boost=7.0, builder= self.boolean_query_builder)
+            self.boolean_query_builder = self.__construct_field('paper_title', query_string, True, False, boost=10.0, builder=self.boolean_query_builder)
+            self.boolean_query_builder = self.__construct_field('content', query_string, False, False, builder=self.boolean_query_builder)
+            self.boolean_query_builder = self.__construct_field('content', query_string, True, False, builder=self.boolean_query_builder)
 
     @staticmethod
     def construct_multi_term_span_query(field_name, term_text):
@@ -198,15 +203,20 @@ class QueryBuilder(object):
         if not text or not text.strip():
             return
 
-        self.__construct_field(field_name, text, is_phrase, must_occur, boost)
+        self.boolean_query_builder = self.__construct_field(field_name, text, is_phrase, must_occur, boost, self.boolean_query_builder)
 
-    def __construct_field(self, field_name, text, is_phrase=False, must_occur=True, boost=1.0):
+    def __construct_field(self, field_name, text, is_phrase=False, must_occur=True, boost=1.0, builder = None):
         """
         Generic wrapper to be able to construct the query for a particular field
 
         :param field_name:
         :return:
         """
+
+        if builder is None:
+
+            print('No builder passed when constructing field.')
+            return
 
         text = text.strip().lower()
         self.is_blank_query = False
@@ -225,8 +235,8 @@ class QueryBuilder(object):
             if boost != 1.0:
                 fuzzy_query = BoostQuery(fuzzy_query, boost)
 
-            self.boolean_query_builder.add(fuzzy_query, occurrence)
-            return
+            builder.add(fuzzy_query, occurrence)
+            return builder
 
         # Get the available AND splits
 
@@ -244,8 +254,8 @@ class QueryBuilder(object):
                 if boost != 1.0:
                     or_query = BoostQuery(or_query, boost)
 
-                self.boolean_query_builder.add(or_query, occurrence)
-            return
+                builder.add(or_query, occurrence)
+            return builder
 
         # Get the available OR splits
 
@@ -259,8 +269,8 @@ class QueryBuilder(object):
             if boost != 1.0:
                 or_query = BoostQuery(or_query, boost)
 
-            self.boolean_query_builder.add(or_query, occurrence)
-            return
+            builder.add(or_query, occurrence)
+            return builder
 
         if len(text.split(' ')) > 1:
 
@@ -272,8 +282,8 @@ class QueryBuilder(object):
             if boost != 1.0:
                 span_query = BoostQuery(span_query, boost)
 
-            self.boolean_query_builder.add(span_query, occurrence)
-            return
+            builder.add(span_query, occurrence)
+            return builder
 
     def __find_splits(self, query_string):
         """

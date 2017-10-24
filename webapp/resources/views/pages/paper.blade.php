@@ -11,9 +11,7 @@
     <div class="row">
         <div class="col-xs-12">
             <section class="ResultCard">
-                <h1 class="ResultTitle">
-                    <a href="/clustering?query_type=paper_by&entity_id={{$paper_info->id}}&max_ref_count=2">{{$paper_info->title}}</a>
-                </h1>
+                <h1 class="ResultTitle">{{$paper_info->title}}</h1>
                 <div class="QuickFacts">
                     @if($paper_info->year)
                         <div class="QuickFact"><span class="lnr lnr-calendar-full"></span>{{$paper_info->year}}</div>
@@ -28,7 +26,7 @@
                 <ul class="AuthorList">
                     @foreach($paper_info->authors as $author)
                         <li class="QuickFact">
-                            <a href="{{route('view author', $author->id)}}">{{$author->title}}</a>
+                            <a href="{{route('view author', $author->id)}}?query_type=author_by&max_ref_count=2&entity_id={{$author->id}}">{{$author->title}}</a>
                         </li>
                     @endforeach
                 </ul>
